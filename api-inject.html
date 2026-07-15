@@ -1,0 +1,13 @@
+<script src="api-client.js"></script>
+<script>
+// Override tools.js apiGet to use static API
+(async function() {
+  await new Promise(r => setTimeout(r, 500));
+  window.apiGet = async function(endpoint, params = {}) {
+    if (window.KryzenAPI) return await window.KryzenAPI.call(endpoint, params);
+    return { error: 'API not ready' };
+  };
+  window.apiPost = window.apiGet;
+  console.log('✅ API redirected to browser-only static API');
+})();
+</script>
