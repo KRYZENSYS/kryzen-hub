@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="description" content="KRYZEN HUB — AI, Cyber Security, Developer Tools, OSINT, Downloader, Telegram, GitHub Analyzer, Dashboard va Portfolio uchun yagona platforma." />
+  <meta name="keywords" content="KRYZEN HUB, AI, Cyber Security, Developer Tools, OSINT, Downloader, Telegram, GitHub" />
+  <meta name="author" content="KRYZENSYS" />
+  <meta property="og:title" content="KRYZEN HUB" />
+  <meta property="og:description" content="AI, Cyber Security, Developer Tools va Automation uchun yagona platforma." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>" />
+  <title>KRYZEN HUB — AI, Cyber Security, Developer Tools & Automation</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <!-- ================= LOADING SCREEN ================= -->
+  <div id="loader" class="loader" role="status" aria-label="Loading">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-text">KRYZEN<span>HUB</span></div>
+      <div class="loader-bar"><div class="loader-bar-fill" id="loaderBar"></div></div>
+      <div class="loader-percent" id="loaderPercent">0%</div>
+    </div>
+  </div>
+
+  <!-- ================= PROGRESS BAR ================= -->
+  <div id="scrollProgress" class="scroll-progress" aria-hidden="true"></div>
+
+  <!-- ================= CUSTOM CURSOR ================= -->
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+  <!-- ================= MATRIX RAIN BACKGROUND ================= -->
+  <canvas id="matrixCanvas" class="matrix-canvas" aria-hidden="true"></canvas>
+
+  <!-- ================= PARTICLES BACKGROUND ================= -->
+  <canvas id="particlesCanvas" class="particles-canvas" aria-hidden="true"></canvas>
+
+  <!-- ================= AURORA BACKGROUND ================= -->
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-blob aurora-1"></div>
+    <div class="aurora-blob aurora-2"></div>
+    <div class="aurora-blob aurora-3"></div>
+  </div>
+
+  <!-- ================= ANIMATED GRID ================= -->
+  <div class="animated-grid" aria-hidden="true"></div>
+
+  <!-- ================= MOUSE GLOW ================= -->
+  <div class="mouse-glow" id="mouseGlow" aria-hidden="true"></div>
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#home" class="nav-logo" aria-label="KRYZEN HUB">
+        <span class="logo-icon">🌌</span>
+        <span class="logo-text">KRYZEN<span class="logo-accent">HUB</span></span>
+      </a>
+
+      <nav class="nav-menu" id="navMenu" aria-label="Asosiy navigatsiya">
+        <a href="#home" class="nav-link">Bosh sahifa</a>
+        <a href="#ai" class="nav-link">AI Markaz</a>
+        <a href="#dev" class="nav-link">Dasturchilar</a>
+        <a href="#cyber" class="nav-link">Cyber Security</a>
+        <a href="#osint" class="nav-link">OSINT</a>
+        <a href="#downloader" class="nav-link">Downloader</a>
+        <a href="#telegram" class="nav-link">Telegram</a>
+        <a href="#github" class="nav-link">GitHub</a>
+        <a href="#portfolio" class="nav-link">Portfolio</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#contact" class="nav-link">Bog'lanish</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="icon-btn" id="searchBtn" aria-label="Qidiruv" title="Qidiruv (Ctrl+K)">🔍</button>
+        <button class="icon-btn" id="themeBtn" aria-label="Tema almashtirish" title="Tema">🌙</button>
+        <button class="icon-btn" id="langBtn" aria-label="Til" title="Til">🇺🇿</button>
+        <button class="icon-btn" id="profileBtn" aria-label="Profil">👤</button>
+        <button class="hamburger" id="hamburger" aria-label="Menyu" aria-expanded="false">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= SEARCH MODAL ================= -->
+  <div class="modal" id="searchModal" role="dialog" aria-hidden="true">
+    <div class="modal-content">
+      <input type="text" id="searchInput" placeholder="Qidiruv... (AI, Cyber, JSON, IP...)" aria-label="Qidiruv" />
+      <div class="search-results" id="searchResults"></div>
+      <p class="modal-hint">ESC - yopish · Enter - tanlash</p>
+    </div>
+  </div>
+
+  <!-- ================= COMMAND PALETTE ================= -->
+  <div class="modal" id="commandPalette" role="dialog" aria-hidden="true">
+    <div class="command-content">
+      <input type="text" id="commandInput" placeholder="Buyruq yozing... (goto:home, theme:light, ...)" />
+      <div class="command-results" id="commandResults"></div>
+    </div>
+  </div>
+
+  <!-- ================= PROFILE MENU ================= -->
+  <div class="profile-menu" id="profileMenu" aria-hidden="true">
+    <a href="#dashboard" class="profile-item">📊 Dashboard</a>
+    <a href="#portfolio" class="profile-item">💼 Portfolio</a>
+    <a href="#" class="profile-item">⚙️ Sozlamalar</a>
+    <a href="#" class="profile-item">🚪 Chiqish</a>
+  </div>
+
+  <!-- ================= HERO SECTION ================= -->
+  <section id="home" class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        Live · Mega-ekosistema
+      </div>
+      <h1 class="hero-title">
+        <span class="typing" id="typingText">KRYZEN HUB</span>
+        <span class="cursor-blink">|</span>
+      </h1>
+      <p class="hero-subtitle">
+        <strong>AI, Cyber Security, Developer Tools va Automation</strong> uchun yagona platforma.
+      </p>
+      <div class="hero-buttons">
+        <button class="btn btn-primary neon-btn" data-section="ai">
+          <span>Boshlash</span>
+          <span class="btn-icon">→</span>
+        </button>
+        <button class="btn btn-secondary" data-section="dev">
+          <span>Barcha xizmatlar</span>
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num" data-target="50">0</div>
+          <div class="stat-label">Vositalar</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" data-target="11">0</div>
+          <div class="stat-label">Bo'limlar</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" data-target="100">0</div>
+          <div class="stat-label">% Bepul</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" data-target="0">0</div>
+          <div class="stat-label">$ Oy</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-hint" aria-hidden="true">
+      <span>Pastga aylantiring</span>
+      <span class="arrow-down">↓</span>
+    </div>
+  </section>
+
+  <!-- ================= AI CENTER ================= -->
+  <section id="ai" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 01</span>
+        <h2 class="section-title"><span class="gradient-text">AI Markazi</span></h2>
+        <p class="section-subtitle">Sun'iy intellektga asoslangan vositalar</p>
+      </div>
+      <div class="cards-grid" id="aiCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= DEVELOPER TOOLKIT ================= -->
+  <section id="dev" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 02</span>
+        <h2 class="section-title"><span class="gradient-text">Developer Toolkit</span></h2>
+        <p class="section-subtitle">Har bir dasturchi uchun zarur vositalar</p>
+      </div>
+      <div class="filter-bar" id="devFilter">
+        <button class="filter-btn active" data-filter="all">Hammasi</button>
+        <button class="filter-btn" data-filter="format">Format</button>
+        <button class="filter-btn" data-filter="generator">Generator</button>
+        <button class="filter-btn" data-filter="converter">Converter</button>
+        <button class="filter-btn" data-filter="security">Security</button>
+      </div>
+      <div class="cards-grid" id="devCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= CYBER SECURITY ================= -->
+  <section id="cyber" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 03</span>
+        <h2 class="section-title"><span class="gradient-text">Cyber Security</span></h2>
+        <p class="section-subtitle">Xavfsizlik va tahlil vositalari</p>
+      </div>
+      <div class="cards-grid" id="cyberCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= OSINT ================= -->
+  <section id="osint" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 04</span>
+        <h2 class="section-title"><span class="gradient-text">OSINT Markazi</span></h2>
+        <p class="section-subtitle">Ochiq manba razvedka vositalari</p>
+      </div>
+      <div class="cards-grid" id="osintCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= DOWNLOADER ================= -->
+  <section id="downloader" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 05</span>
+        <h2 class="section-title"><span class="gradient-text">Downloader</span></h2>
+        <p class="section-subtitle">Istalgan kontentni yuklab oling</p>
+      </div>
+      <div class="cards-grid" id="downloaderCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= TELEGRAM ================= -->
+  <section id="telegram" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 06</span>
+        <h2 class="section-title"><span class="gradient-text">Telegram Toolkit</span></h2>
+        <p class="section-subtitle">Telegram botlar va Web Apps uchun</p>
+      </div>
+      <div class="cards-grid" id="telegramCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= GITHUB ================= -->
+  <section id="github" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 07</span>
+        <h2 class="section-title"><span class="gradient-text">GitHub Markazi</span></h2>
+        <p class="section-subtitle">Repository va profil tahlili</p>
+      </div>
+      <div class="github-analyzer glass-card">
+        <input type="text" id="githubInput" placeholder="GitHub username: KRYZENSYS" value="KRYZENSYS" />
+        <button class="btn btn-primary" id="githubAnalyzeBtn">Tahlil qilish</button>
+        <div class="github-result" id="githubResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FILES ================= -->
+  <section id="files" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 08</span>
+        <h2 class="section-title"><span class="gradient-text">Fayl Vositalari</span></h2>
+        <p class="section-subtitle">PDF, rasm, matn bilan ishlash</p>
+      </div>
+      <div class="cards-grid" id="filesCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section id="dashboard" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 09</span>
+        <h2 class="section-title"><span class="gradient-text">Dashboard</span></h2>
+        <p class="section-subtitle">Statistika va monitoring</p>
+      </div>
+      <div class="dashboard-grid">
+        <div class="dash-card glass-card">
+          <h4>🤖 AI Statistikasi</h4>
+          <div class="big-number" id="aiCount">0</div>
+          <div class="bar-chart" id="aiChart"></div>
+        </div>
+        <div class="dash-card glass-card">
+          <h4>💻 GitHub</h4>
+          <div class="big-number" id="repoCount">22</div>
+          <p class="dash-label">Repository · 1 star</p>
+          <div class="circle-progress"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" class="bg-circle"></circle><circle cx="50" cy="50" r="40" class="fg-circle" id="circleProgress"></circle></svg><span id="circleText">85%</span></div>
+        </div>
+        <div class="dash-card glass-card">
+          <h4>📥 Download</h4>
+          <div class="big-number">1,247</div>
+          <p class="dash-label">Fayllar yuklandi</p>
+        </div>
+        <div class="dash-card glass-card">
+          <h4>📂 Loyihalar</h4>
+          <div class="big-number">14</div>
+          <p class="dash-label">Faol loyihalar</p>
+        </div>
+        <div class="dash-card glass-card">
+          <h4>🔔 Bildirishnomalar</h4>
+          <ul class="notif-list" id="notifList"></ul>
+        </div>
+        <div class="dash-card glass-card">
+          <h4>📈 So'nggi faollik</h4>
+          <div class="activity-feed" id="activityFeed"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PORTFOLIO ================= -->
+  <section id="portfolio" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 10</span>
+        <h2 class="section-title"><span class="gradient-text">Portfolio</span></h2>
+        <p class="section-subtitle">Barcha loyihalar bir joyda</p>
+      </div>
+      <div class="filter-bar" id="portfolioFilter">
+        <button class="filter-btn active" data-filter="all">Hammasi</button>
+        <button class="filter-btn" data-filter="web">Web</button>
+        <button class="filter-btn" data-filter="ai">AI</button>
+        <button class="filter-btn" data-filter="mobile">Mobile</button>
+        <button class="filter-btn" data-filter="bot">Bot</button>
+        <button class="filter-btn" data-filter="cyber">Cyber</button>
+      </div>
+      <div class="cards-grid portfolio-grid" id="portfolioCards"></div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact" class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">// 11</span>
+        <h2 class="section-title"><span class="gradient-text">Bog'lanish</span></h2>
+        <p class="section-subtitle">Savollaringiz bormi? Yozing!</p>
+      </div>
+      <div class="contact-grid">
+        <form class="contact-form glass-card" id="contactForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Ism</label>
+              <input type="text" id="name" name="name" required placeholder="Ismingiz" />
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required placeholder="email@example.com" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="subject">Mavzu</label>
+            <input type="text" id="subject" name="subject" required placeholder="Mavzu" />
+          </div>
+          <div class="form-group">
+            <label for="message">Xabar</label>
+            <textarea id="message" name="message" rows="5" required placeholder="Xabaringizni yozing..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary neon-btn">
+            <span>Yuborish</span>
+            <span class="btn-icon">→</span>
+          </button>
+        </form>
+        <div class="contact-info">
+          <div class="glass-card info-card">
+            <div class="info-icon">💻</div>
+            <h4>GitHub</h4>
+            <a href="https://github.com/KRYZENSYS" target="_blank" rel="noopener">github.com/KRYZENSYS</a>
+          </div>
+          <div class="glass-card info-card">
+            <div class="info-icon">✈️</div>
+            <h4>Telegram</h4>
+            <a href="https://t.me/kryzensys" target="_blank" rel="noopener">@kryzensys</a>
+          </div>
+          <div class="glass-card info-card">
+            <div class="info-icon">📸</div>
+            <h4>Instagram</h4>
+            <a href="https://instagram.com/kryzensys" target="_blank" rel="noopener">@kryzensys</a>
+          </div>
+          <div class="glass-card info-card">
+            <div class="info-icon">✉️</div>
+            <h4>Email</h4>
+            <a href="mailto:f91186645@gmail.com">f91186645@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h3 class="footer-logo">🌌 KRYZEN<span>HUB</span></h3>
+          <p>AI, Cyber Security, Developer Tools va Automation uchun yagona premium platforma.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <a href="#ai">AI Markaz</a>
+          <a href="#dev">Developer Tools</a>
+          <a href="#cyber">Cyber Security</a>
+          <a href="#osint">OSINT</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="#github">GitHub Analyzer</a>
+          <a href="#telegram">Telegram Tools</a>
+          <a href="#portfolio">Portfolio</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Newsletter</h4>
+          <p>Yangiliklardan xabardor bo'ling</p>
+          <form class="newsletter-form" id="newsletterForm">
+            <input type="email" placeholder="Email" required />
+            <button type="submit" class="btn btn-primary">Obuna</button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 <strong>KRYZEN HUB</strong> · MIT License · <span id="footerTime"></span></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= BACK TO TOP ================= -->
+  <button class="back-to-top" id="backToTop" aria-label="Tepaga">↑</button>
+
+  <!-- ================= SETTINGS PANEL ================= -->
+  <button class="settings-btn" id="settingsBtn" aria-label="Sozlamalar">⚙️</button>
+  <div class="settings-panel" id="settingsPanel" aria-hidden="true">
+    <h3>Sozlamalar</h3>
+    <div class="setting-group">
+      <label>Accent Color</label>
+      <div class="color-picker">
+        <button class="color-dot" style="background:#8B5CF6" data-color="#8B5CF6"></button>
+        <button class="color-dot" style="background:#EC4899" data-color="#EC4899"></button>
+        <button class="color-dot" style="background:#06B6D4" data-color="#06B6D4"></button>
+        <button class="color-dot" style="background:#10B981" data-color="#10B981"></button>
+        <button class="color-dot" style="background:#F59E0B" data-color="#F59E0B"></button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <label>Performance Mode</label>
+      <button class="btn btn-secondary" id="perfModeBtn">Yoqish</button>
+    </div>
+    <div class="setting-group">
+      <label>Accessibility</label>
+      <button class="btn btn-secondary" id="a11yModeBtn">Yoqish</button>
+    </div>
+  </div>
+
+  <!-- ================= TOAST ================= -->
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="assets/script.js"></script>
+</body>
+</html>
