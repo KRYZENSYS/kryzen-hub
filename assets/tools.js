@@ -1,1333 +1,1536 @@
 /* ============================================================
-   KRYZEN HUB - ALL TOOLS FULLY WORKING
+   KRYZEN HUB - Tools Implementation (All Real APIs)
    ============================================================ */
-(() => {
-  'use strict';
 
-  // ============================================================
-  // MODAL SYSTEM - har bir tool uchun universal modal
-  // ============================================================
-  const $ = (s, c = document) => c.querySelector(s);
-  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
-  const create = (t, p = {}, ...ch) => {
-    const e = document.createElement(t);
-    Object.entries(p).forEach(([k, v]) => k === 'class' ? e.className = v : k === 'dataset' ? Object.assign(e.dataset, v) : k === 'onclick' ? e.onclick = v : e.setAttribute(k, v));
-    ch.forEach(c => typeof c === 'string' ? e.appendChild(document.createTextNode(c)) : c && e.appendChild(c));
-    return e;
-  };
+const API_BASE = 'https://kryzen-hub.vercel.app/api';
+// Fallback to local if Vercel not yet deployed
+const API_FALLBACK = '/api';
 
-  // Global modal funksiyalari
-  window.openTool = (toolName) => {
-    const modal = $('#toolModal');
-    const content = $('#toolContent');
-    if (!modal || !content) return;
-    content.innerHTML = '';
-    content.appendChild(window.tools[toolName]());
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  };
-  window.closeTool = () => {
-    const modal = $('#toolModal');
-    if (modal) {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  };
-
-  // Toast
-  const toast = (msg, type = 'success') => {
-    const t = $('#toast');
-    if (!t) return;
-    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
-    t.classList.add('show');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
-  };
-
-  // Copy to clipboard
-  const copy = (text) => {
-    navigator.clipboard.writeText(text).then(() => toast('Nusxalandi!')).catch(() => toast('Nusxalash xatosi', 'error'));
-  };
-
-  // ============================================================
-  // TOOLS COLLECTION
-  // ============================================================
-  window.tools = {
-    // ===== AI TOOLS =====
-    'AI Chat': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '💬 AI Chat'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Tabiiy tilda muloqot. Demo versiya.'));
-      const inp = create('textarea', { class: 'tool-input', rows: '4', placeholder: 'Savolingizni yozing...' });
-      const btn = create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = inp.value.trim();
-        if (!v) return toast('Savol yozing', 'error');
-        const out = $('#chatOut');
-        const responses = ['Bu juda yaxshi savol!','AI yordamida men sizga yordam bera olaman.','Buni tahlil qilib ko\'ray...','Tabriklayman! Bu g\'oya zo\'r.','Hozircha bu funksiya demo rejimida.','Tez orada to\'liq AI integratsiya qo\'shiladi.'];
-        if (out) {
-          out.appendChild(create('div', { class: 'chat-msg chat-user' }, '👤 ' + v));
-          out.appendChild(create('div', { class: 'chat-msg chat-ai' }, '🤖 ' + responses[Math.floor(Math.random() * responses.length)]));
-          out.scrollTop = out.scrollHeight;
-          inp.value = '';
-        }
-      } }, 'Yuborish');
-      const out = create('div', { class: 'chat-output', id: 'chatOut' });
-      wrap.appendChild(inp);
-      wrap.appendChild(btn);
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Kod yozuvchi AI': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '👨‍💻 Kod yozuvchi AI'));
-      const lang = create('select', { class: 'tool-input' });
-      ['javascript', 'python', 'html', 'css', 'java', 'cpp', 'go', 'rust'].forEach(l => lang.appendChild(create('option', { value: l }, l.toUpperCase())));
-      const inp = create('textarea', { class: 'tool-input', rows: '3', placeholder: 'Nima qilish kerak? Masalan: "sort qiluvchi funksiya"' });
-      const btn = create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = inp.value.trim();
-        if (!v) return toast('Tavsif yozing', 'error');
-        const codeSamples = {
-          javascript: 'function sort(arr) {\n  return arr.sort((a, b) => a - b);\n}\nconsole.log(sort([3,1,4,1,5,9,2,6]));',
-          python: 'def sort_list(arr):\n    return sorted(arr)\n\nprint(sort_list([3,1,4,1,5,9,2,6]))',
-          html: '<!DOCTYPE html>\n<html>\n<head><title>Hello</title></head>\n<body>\n  <h1>Hello World</h1>\n</body>\n</html>',
-          css: '.container {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n}'
-        };
-        const out = $('#kodOut');
-        if (out) { out.textContent = codeSamples[lang.value] || '// AI kod generator\n// Tez orada...'; out.dataset.full = out.textContent; }
-      } }, 'Kod yaratish');
-      const out = create('pre', { class: 'code-output', id: 'kodOut' }, '// AI tomonidan yaratilgan kod shu yerda chiqadi');
-      wrap.appendChild(create('label', {}, 'Til:'));
-      wrap.appendChild(lang);
-      wrap.appendChild(create('label', {}, 'Tavsif:'));
-      wrap.appendChild(inp);
-      wrap.appendChild(btn);
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Nusxalash'));
-      return wrap;
-    },
-    'Kod tushuntiruvchi': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔍 Kod tushuntiruvchi'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '6', placeholder: 'Kodni shu yerga joylashtiring...' }));
-      const btn = create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = wrap.querySelector('textarea').value.trim();
-        if (!v) return toast('Kod kiriting', 'error');
-        const out = create('pre', { class: 'code-output' }, '📖 Tushuntirish:\n\n1. Kod funksiya yoki skript ko\'rinishida\n2. Asosiy mantiq:\n   - O\'zgaruvchilar e\'lon qilingan\n   - Funksiyalar aniqlangan\n   - Natijalar qaytarilgan\n\n⚠️ Bu demo versiya. To\'liq AI bilan batafsil tushuntirish olinadi.');
-        const old = wrap.querySelector('pre'); if (old) old.remove();
-        wrap.appendChild(out);
-      } }, 'Tushuntirish');
-      wrap.appendChild(btn);
-      return wrap;
-    },
-    'Xatolarni topuvchi': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🐛 Xatolarni topuvchi'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '6', placeholder: 'Kodni joylashtiring...' }));
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = wrap.querySelector('textarea').value.trim();
-        if (!v) return toast('Kod kiriting', 'error');
-        const out = create('div', { class: 'alert alert-warn' }, '⚠️ Tahlil natijalari:\n\n• Sintaksis tekshirildi\n• O\'zgaruvchilar tekshirildi\n• Funksiya chaqiruvlari tekshirildi\n\n⚠️ Bu demo versiya. Haqiqiy xatolarni aniqlash uchun to\'liq AI kerak.');
-        const old = wrap.querySelector('.alert'); if (old) old.remove();
-        wrap.appendChild(out);
-      } }, 'Tekshirish'));
-      return wrap;
-    },
-    'Prompt Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '✨ Prompt Generator'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'Mavzu: masalan "Veb sayt dizayni"' }));
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = wrap.querySelector('input').value.trim();
-        if (!v) return toast('Mavzu kiriting', 'error');
-        const prompts = [
-          `"${v}" haqida batafsil ma\'lumot ber, 5 ta asosiy jihatlarini sanab o\'t`,
-          `Men ${v} bilan shug\'ullanmoqchiman. Qayerdan boshlashim kerak?`,
-          `"${v}" ning afzalliklari va kamchiliklarini taqqoslab ber`,
-          `"${v}" uchun 10 ta amaliy maslahat ber, real misollar bilan`
-        ];
-        const out = create('div', { class: 'alert alert-success' }, '🎯 Generatsiya qilingan promptlar:\n\n' + prompts.map((p, i) => `${i + 1}. ${p}`).join('\n\n'));
-        const old = wrap.querySelector('.alert'); if (old) old.remove();
-        wrap.appendChild(out);
-      } }, 'Yaratish'));
-      return wrap;
-    },
-    'Tarjimon': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🌐 Tarjimon'));
-      const from = create('select', { class: 'tool-input' });
-      ['uz','en','ru','tr','ar','zh','es','fr','de','ja','ko'].forEach(l => from.appendChild(create('option', { value: l }, 'From: ' + l.toUpperCase())));
-      const to = create('select', { class: 'tool-input' });
-      ['en','uz','ru','tr','ar','zh','es','fr','de','ja','ko'].forEach(l => to.appendChild(create('option', { value: l }, 'To: ' + l.toUpperCase())));
-      wrap.appendChild(from); wrap.appendChild(to);
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '4', placeholder: 'Tarjima qilinadigan matn...' }));
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = wrap.querySelectorAll('textarea')[0].value.trim();
-        if (!v) return toast('Matn kiriting', 'error');
-        const out = create('div', { class: 'alert alert-success' }, '🔄 Tarjima natijasi:\n\n[' + to.value.toUpperCase() + ']: ' + v + '\n\n⚠️ Bu demo versiya. To\'liq tarjima uchun Google Translate API kerak.');
-        const old = wrap.querySelector('.alert'); if (old) old.remove();
-        wrap.appendChild(out);
-      } }, 'Tarjima qilish'));
-      return wrap;
-    },
-    'Matn qisqartiruvchi': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📝 Matn qisqartiruvchi'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '6', placeholder: 'Matnni kiriting...' }));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'number', placeholder: 'Qisqartirish foizi (50%)', value: '50' }));
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const ta = wrap.querySelector('textarea');
-        const pct = parseInt(wrap.querySelector('input').value) || 50;
-        const v = ta.value.trim();
-        if (!v) return toast('Matn kiriting', 'error');
-        const words = v.split(/\s+/);
-        const keep = Math.max(1, Math.floor(words.length * pct / 100));
-        const result = words.slice(0, keep).join(' ') + (keep < words.length ? '...' : '');
-        const out = create('div', { class: 'alert alert-success' }, '📋 Qisqartirilgan matn:\n\n' + result + '\n\nAsl: ' + words.length + ' so\'z → Yangi: ' + keep + ' so\'z');
-        const old = wrap.querySelector('.alert'); if (old) old.remove();
-        wrap.appendChild(out);
-      } }, 'Qisqartirish'));
-      return wrap;
-    },
-    'Grammar Checker': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '✅ Grammar Checker'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '6', placeholder: 'Matnni tekshirish uchun kiriting...' }));
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = wrap.querySelector('textarea').value.trim();
-        if (!v) return toast('Matn kiriting', 'error');
-        const issues = [
-          '✓ Grammatik jihatdan to\'g\'ri',
-          '⚠️ 1 ta xatolik aniqlandi',
-          '⚠️ Vergul yetishmaydi',
-          '✓ Tinish belgilari to\'g\'ri',
-          '⚠️ "their" va "there" ni tekshiring'
-        ];
-        const out = create('div', { class: 'alert alert-success' }, '📝 Tahlil:\n\n' + issues.join('\n') + '\n\n⚠️ Bu demo versiya.');
-        const old = wrap.querySelector('.alert'); if (old) old.remove();
-        wrap.appendChild(out);
-      } }, 'Tekshirish'));
-      return wrap;
-    },
-    'Rasm Prompt': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🎨 Rasm Prompt Generator'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'Rasm mavzusi: "cyberpunk city"' }));
-      const style = create('select', { class: 'tool-input' });
-      ['Realistic','Anime','3D Render','Oil Painting','Watercolor','Cyberpunk','Minimalist','Photographic'].forEach(s => style.appendChild(create('option', {}, s)));
-      wrap.appendChild(style);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const v = wrap.querySelector('input').value.trim();
-        if (!v) return toast('Mavzu kiriting', 'error');
-        const prompt = `${v}, ${style.value.toLowerCase()} style, highly detailed, 8k, professional lighting, dramatic atmosphere, trending on artstation, masterpiece`;
-        const out = create('div', { class: 'alert alert-success' }, '🎨 Generatsiya qilingan prompt:\n\n' + prompt);
-        const old = wrap.querySelector('.alert'); if (old) old.remove();
-        wrap.appendChild(out);
-        wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(prompt) }, '📋 Nusxalash'));
-      } }, 'Yaratish'));
-      return wrap;
-    },
-    'Voice AI': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🎙️ Voice AI'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Ovozli buyruqlar bilan ishlash. Browser Speech API ishlatiladi.'));
-      const out = create('div', { class: 'alert alert-success', id: 'voiceOut' }, '🎤 Natija shu yerda ko\'rinadi...');
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return toast('Browser qo\'llab-quvvatlamaydi', 'error');
-        const r = new SR();
-        r.lang = 'uz-UZ';
-        r.onresult = (e) => {
-          const txt = e.results[0][0].transcript;
-          out.innerHTML = '✅ Eshitildi: "' + txt + '"';
-          toast('Ovoz aniqlandi!');
-        };
-        r.onerror = () => toast('Xatolik', 'error');
-        r.start();
-        toast('🎤 Gapiring...');
-      } }, '🎤 Boshlash'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Kelajak AI': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🚀 Kelajak AI'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Tez orada kelayotgan AI imkoniyatlari:'));
-      const features = ['🎥 AI Video Generator','🎵 AI Music Composer','📝 AI Writer','🌐 AI Translator Pro','🎨 AI Designer','🧠 AI Brainstorming','🤖 AI Agent','📊 AI Analytics','🔮 AI Predictor','💬 AI Chatbot Pro'];
-      const list = create('div', { class: 'feature-list' });
-      features.forEach(f => list.appendChild(create('div', { class: 'feature-item' }, f)));
-      wrap.appendChild(list);
-      wrap.appendChild(create('p', { class: 'tool-desc' }, '⏰ Barcha funksiyalar tez orada qo\'shiladi!'));
-      return wrap;
-    },
-
-    // ===== DEVELOPER TOOLS =====
-    'JSON Formatter': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '{} JSON Formatter'));
-      const inp = create('textarea', { class: 'tool-input', rows: '8', placeholder: '{"name":"John","age":30}' });
-      const out = create('pre', { class: 'code-output', id: 'jsonOut' }, '// Natija shu yerda');
-      wrap.appendChild(inp);
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: () => {
-          try { out.textContent = JSON.stringify(JSON.parse(inp.value), null, 2); toast('Formatlandi!'); }
-          catch (e) { out.textContent = '❌ Xato: ' + e.message; toast('Noto\'g\'ri JSON', 'error'); }
-        } }, 'Format'),
-        create('button', { class: 'btn btn-secondary', onclick: () => {
-          try { out.textContent = JSON.stringify(JSON.parse(inp.value)); toast('Minify qilindi!'); }
-          catch (e) { out.textContent = '❌ Xato: ' + e.message; }
-        } }, 'Minify'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'JSON Validator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '✓ JSON Validator'));
-      const inp = create('textarea', { class: 'tool-input', rows: '8', placeholder: 'JSON kiriting...' });
-      const out = create('div', { class: 'alert', id: 'jsonValOut' }, 'Natija shu yerda');
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        try { JSON.parse(inp.value); out.className = 'alert alert-success'; out.textContent = '✅ JSON to\'g\'ri formatda!'; toast('Valid JSON!'); }
-        catch (e) { out.className = 'alert alert-error'; out.textContent = '❌ Xato: ' + e.message; toast('Noto\'g\'ri JSON', 'error'); }
-      } }, 'Tekshirish'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Base64 Encode': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'B64 Base64 Encode'));
-      const inp = create('textarea', { class: 'tool-input', rows: '5', placeholder: 'Matn kiriting...' });
-      const out = create('textarea', { class: 'tool-input', rows: '5', readonly: 'readonly' });
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        out.value = btoa(unescape(encodeURIComponent(inp.value)));
-        toast('Encode qilindi!');
-      } }, 'Encode'));
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy'));
-      return wrap;
-    },
-    'Base64 Decode': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'B64 Base64 Decode'));
-      const inp = create('textarea', { class: 'tool-input', rows: '5', placeholder: 'Base64 kiriting...' });
-      const out = create('textarea', { class: 'tool-input', rows: '5', readonly: 'readonly' });
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        try { out.value = decodeURIComponent(escape(atob(inp.value))); toast('Decode qilindi!'); }
-        catch (e) { out.value = '❌ Xato: ' + e.message; toast('Xato', 'error'); }
-      } }, 'Decode'));
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy'));
-      return wrap;
-    },
-    'URL Encode': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'URL URL Encode'));
-      const inp = create('textarea', { class: 'tool-input', rows: '4', placeholder: 'URL yoki matn...' });
-      const out = create('textarea', { class: 'tool-input', rows: '4', readonly: 'readonly' });
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => { out.value = encodeURIComponent(inp.value); toast('Encoded!'); } }, 'Encode'));
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy'));
-      return wrap;
-    },
-    'URL Decode': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'URL URL Decode'));
-      const inp = create('textarea', { class: 'tool-input', rows: '4', placeholder: 'Encoded URL...' });
-      const out = create('textarea', { class: 'tool-input', rows: '4', readonly: 'readonly' });
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => { try { out.value = decodeURIComponent(inp.value); toast('Decoded!'); } catch (e) { out.value = '❌ Xato'; } } }, 'Decode'));
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy'));
-      return wrap;
-    },
-    'Regex Tester': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '.* Regex Tester'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'Regex pattern: /\\d+/g', id: 'regexPattern' }));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '5', placeholder: 'Test matni...', id: 'regexText' }));
-      const out = create('div', { class: 'alert alert-success', id: 'regexOut' }, 'Natija shu yerda');
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        try {
-          const pat = $('#regexPattern').value;
-          const txt = $('#regexText').value;
-          const re = new RegExp(pat.replace(/^\/|\/[gimsuy]*$/g, ''), pat.match(/[gimsuy]*$/)?.[0] || '');
-          const matches = txt.match(re) || [];
-          out.innerHTML = `✅ Topildi: <strong>${matches.length}</strong> ta<br><br>` + matches.map(m => `<span class="regex-match">${m}</span>`).join(' ');
-        } catch (e) { out.className = 'alert alert-error'; out.textContent = '❌ ' + e.message; }
-      } }, 'Test'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'UUID Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔑 UUID Generator'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'number', value: '5', min: '1', max: '50', id: 'uuidCount' }));
-      const out = create('div', { class: 'code-output', id: 'uuidOut' });
-      const gen = () => {
-        const n = parseInt($('#uuidCount').value) || 5;
-        let uuids = '';
-        for (let i = 0; i < n; i++) uuids += crypto.randomUUID() + '\n';
-        out.textContent = uuids;
-      };
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: gen }, '🎲 Generate'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      gen();
-      return wrap;
-    },
-    'Password Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔐 Password Generator'));
-      const len = create('input', { class: 'tool-input', type: 'number', value: '20', min: '8', max: '128' });
-      const out = create('input', { class: 'tool-input', readonly: 'readonly', id: 'pwdOut' });
-      const strength = create('div', { class: 'pwd-strength', id: 'pwdStrength' });
-      const gen = () => {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
-        let pwd = '';
-        for (let i = 0; i < (parseInt(len.value) || 20); i++) pwd += chars[Math.floor(Math.random() * chars.length)];
-        out.value = pwd;
-        const s = pwd.length < 12 ? 'Kuchsiz' : pwd.length < 20 ? 'O\'rtacha' : 'Juda kuchli';
-        strength.innerHTML = 'Kuchlilik: <strong>' + s + '</strong>';
-        strength.className = 'pwd-strength strength-' + (s === 'Kuchsiz' ? 'weak' : s === 'O\'rtacha' ? 'medium' : 'strong');
-      };
-      wrap.appendChild(create('label', {}, 'Uzunlik:'));
-      wrap.appendChild(len);
-      wrap.appendChild(create('div', { class: 'btn-group' }, create('button', { class: 'btn btn-primary', onclick: gen }, '🎲 Generate'), create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy')));
-      wrap.appendChild(out);
-      wrap.appendChild(strength);
-      gen();
-      return wrap;
-    },
-    'QR Code': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'QR QR Code Generator'));
-      const inp = create('input', { class: 'tool-input', placeholder: 'URL yoki matn...', value: 'https://kryzensys.github.io/kryzen-hub/' });
-      const out = create('div', { class: 'qr-output', id: 'qrOut' });
-      const gen = () => {
-        const v = inp.value.trim() || 'https://kryzensys.github.io/kryzen-hub/';
-        out.innerHTML = '';
-        const img = create('img', { src: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(v), alt: 'QR' });
-        out.appendChild(img);
-      };
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: gen }, 'Generate'));
-      wrap.appendChild(out);
-      gen();
-      return wrap;
-    },
-    'Color Picker': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🎨 Color Picker'));
-      const color = create('input', { class: 'tool-input', type: 'color', value: '#8B5CF6' });
-      const hex = create('input', { class: 'tool-input', readonly: 'readonly' });
-      const rgb = create('input', { class: 'tool-input', readonly: 'readonly' });
-      const preview = create('div', { class: 'color-preview' });
-      const update = () => {
-        hex.value = color.value;
-        const r = parseInt(color.value.slice(1, 3), 16);
-        const g = parseInt(color.value.slice(3, 5), 16);
-        const b = parseInt(color.value.slice(5, 7), 16);
-        rgb.value = `rgb(${r}, ${g}, ${b})`;
-        preview.style.background = color.value;
-      };
-      color.addEventListener('input', update);
-      wrap.appendChild(color);
-      wrap.appendChild(create('label', {}, 'HEX:')); wrap.appendChild(hex);
-      wrap.appendChild(create('label', {}, 'RGB:')); wrap.appendChild(rgb);
-      wrap.appendChild(preview);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(hex.value) }, '📋 Copy HEX'));
-      update();
-      return wrap;
-    },
-    'Gradient Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🌈 Gradient Generator'));
-      const c1 = create('input', { class: 'tool-input', type: 'color', value: '#8B5CF6' });
-      const c2 = create('input', { class: 'tool-input', type: 'color', value: '#EC4899' });
-      const dir = create('select', { class: 'tool-input' });
-      ['to right', 'to left', 'to bottom', 'to top', '45deg', '135deg', '225deg', '315deg'].forEach(d => dir.appendChild(create('option', { value: d }, d)));
-      const preview = create('div', { class: 'gradient-preview' });
-      const code = create('textarea', { class: 'code-output', rows: '3', readonly: 'readonly' });
-      const update = () => {
-        const grad = `linear-gradient(${dir.value}, ${c1.value}, ${c2.value})`;
-        preview.style.background = grad;
-        code.value = `background: ${grad};`;
-      };
-      [c1, c2, dir].forEach(el => el.addEventListener('input', update));
-      wrap.appendChild(c1); wrap.appendChild(c2); wrap.appendChild(dir);
-      wrap.appendChild(preview); wrap.appendChild(code);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(code.value) }, '📋 Copy CSS'));
-      update();
-      return wrap;
-    },
-    'CSS Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'CSS CSS Generator'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'class nomi', value: '.my-class' }));
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-secondary', onclick: () => { wrap.querySelectorAll('input')[0].value = '.box-shadow'; wrap.querySelector('pre').textContent = '.box-shadow {\n  box-shadow: 0 10px 30px rgba(0,0,0,0.3);\n  border-radius: 12px;\n  transition: all 0.3s ease;\n}'; } }, 'Box Shadow'),
-        create('button', { class: 'btn btn-secondary', onclick: () => { wrap.querySelectorAll('input')[0].value = '.flex-center'; wrap.querySelector('pre').textContent = '.flex-center {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}'; } }, 'Flex Center'),
-        create('button', { class: 'btn btn-secondary', onclick: () => { wrap.querySelectorAll('input')[0].value = '.glass'; wrap.querySelector('pre').textContent = '.glass {\n  background: rgba(255, 255, 255, 0.1);\n  backdrop-filter: blur(20px);\n  border: 1px solid rgba(255, 255, 255, 0.2);\n  border-radius: 16px;\n}'; } }, 'Glassmorphism'),
-        create('button', { class: 'btn btn-secondary', onclick: () => { wrap.querySelectorAll('input')[0].value = '.gradient-text'; wrap.querySelector('pre').textContent = '.gradient-text {\n  background: linear-gradient(90deg, #8B5CF6, #EC4899);\n  -webkit-background-clip: text;\n  -webkit-text-fill-color: transparent;\n  background-clip: text;\n}'; } }, 'Gradient Text')
-      ));
-      wrap.appendChild(create('pre', { class: 'code-output' }, '.my-class {\n  /* CSS shu yerda */\n}'));
-      return wrap;
-    },
-    'HTML Beautifier': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '</> HTML Beautifier'));
-      const inp = create('textarea', { class: 'tool-input', rows: '6', placeholder: '<div><p>html</p></div>' });
-      const out = create('pre', { class: 'code-output', readonly: 'readonly' });
-      wrap.appendChild(inp);
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: () => {
-          let html = inp.value, formatted = '', indent = 0;
-          html = html.replace(/></g, '>\n<');
-          html.split('\n').forEach(line => {
-            if (line.match(/^<\/\w/)) indent = Math.max(0, indent - 1);
-            formatted += '  '.repeat(indent) + line + '\n';
-            if (line.match(/^<\w[^>]*[^/]>$/) && !line.match(/^<(br|img|input|meta)/)) indent++;
-          });
-          out.textContent = formatted.trim();
-          toast('Formatlandi!');
-        } }, 'Format'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'JS Minifier': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'JS JS Minifier'));
-      const inp = create('textarea', { class: 'tool-input', rows: '6', placeholder: 'function hello ( ) { console.log( "hi" ) }' });
-      const out = create('textarea', { class: 'tool-input', rows: '4', readonly: 'readonly' });
-      wrap.appendChild(inp);
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: () => { out.value = inp.value.replace(/\s+/g, ' ').replace(/\s*([{}();,:])\s*/g, '$1').trim(); toast('Minify!'); } }, 'Minify'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Markdown Preview': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'MD Markdown Preview'));
-      const inp = create('textarea', { class: 'tool-input', rows: '8', placeholder: '# Hello\n**bold** *italic*' });
-      const out = create('div', { class: 'md-preview' });
-      wrap.appendChild(create('label', {}, 'Markdown:'));
-      wrap.appendChild(inp);
-      wrap.appendChild(create('label', {}, 'Preview:'));
-      wrap.appendChild(out);
-      inp.addEventListener('input', () => {
-        let html = inp.value
-          .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-          .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-          .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-          .replace(/`(.*?)`/g, '<code>$1</code>')
-          .replace(/\n/g, '<br>');
-        out.innerHTML = html;
-      });
-      return wrap;
-    },
-    'Timestamp Converter': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '⏰ Timestamp Converter'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'number', value: Math.floor(Date.now() / 1000), id: 'tsInput' }));
-      const out = create('div', { class: 'alert alert-success', id: 'tsOut' });
-      const update = () => {
-        const ts = parseInt($('#tsInput').value);
-        const d = new Date(ts * 1000);
-        out.innerHTML = `📅 ${d.toLocaleString('uz-UZ')}<br>ISO: ${d.toISOString()}<br>UTC: ${d.toUTCString()}`;
-      };
-      $('#tsInput').addEventListener('input', update);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => { $('#tsInput').value = Math.floor(Date.now() / 1000); update(); } }, '⏱ Now'));
-      wrap.appendChild(out);
-      update();
-      return wrap;
-    },
-    'Lorem Ipsum': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📄 Lorem Ipsum'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'number', value: '3', id: 'loremCount', min: '1', max: '20' }));
-      const out = create('textarea', { class: 'tool-input', rows: '8', readonly: 'readonly' });
-      const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.';
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: () => { out.value = Array(parseInt($('#loremCount').value) || 3).fill(lorem).join('\n\n'); toast('Generated!'); } }, '🎲 Generate'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Random Data': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🎲 Random Data Generator'));
-      const type = create('select', { class: 'tool-input' });
-      ['Number', 'String', 'Email', 'Name', 'UUID', 'Boolean'].forEach(t => type.appendChild(create('option', {}, t)));
-      wrap.appendChild(type);
-      const out = create('div', { class: 'code-output' });
-      const gen = () => {
-        const t = type.value, r = Math.random;
-        let res = '';
-        if (t === 'Number') res = Math.floor(r() * 10000);
-        else if (t === 'String') res = r().toString(36).substring(2, 15);
-        else if (t === 'Email') res = `user${Math.floor(r() * 1000)}@example.com`;
-        else if (t === 'Name') res = ['Ali', 'Vali', 'Soli', 'Bek', 'Nodir', 'Madina'][Math.floor(r() * 6)];
-        else if (t === 'UUID') res = crypto.randomUUID();
-        else if (t === 'Boolean') res = r() > 0.5 ? 'true' : 'false';
-        out.textContent = res;
-      };
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: gen }, '🎲 Generate'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      gen();
-      return wrap;
-    },
-
-    // ===== CYBER SECURITY =====
-    'IP Lookup': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🌐 IP Lookup'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'IP manzil (8.8.8.8)', id: 'ipInp' }));
-      const out = create('div', { class: 'alert alert-success', id: 'ipOut' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const ip = $('#ipInp').value.trim();
-        if (!ip) return toast('IP kiriting', 'error');
-        try {
-          const r = await fetch('https://ipapi.co/' + ip + '/json/');
-          const d = await r.json();
-          out.innerHTML = `✅ <strong>${d.ip}</strong><br>Mamlakat: ${d.country_name}<br>Shahar: ${d.city}<br>Mintaqa: ${d.region}<br>ISP: ${d.org}<br>Timezone: ${d.timezone}`;
-          toast('Topildi!');
-        } catch (e) { out.innerHTML = '❌ Xato: ' + e.message; out.className = 'alert alert-error'; }
-      } }, '🔍 Lookup'));
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: async () => {
-        const r = await fetch('https://api.ipify.org?format=json'); const d = await r.json(); $('#ipInp').value = d.ip; toast('Sizning IP: ' + d.ip);
-      } }, '📍 Mening IP'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'DNS Lookup': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📡 DNS Lookup'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'google.com' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const domain = wrap.querySelector('input').value.trim();
-        if (!domain) return toast('Domain kiriting', 'error');
-        try {
-          const r = await fetch('https://dns.google/resolve?name=' + domain + '&type=A');
-          const d = await r.json();
-          if (d.Answer) {
-            out.innerHTML = '✅ A yozuvlari:\n\n' + d.Answer.map(a => `• ${a.data} (TTL: ${a.TTL})`).join('\n');
-            toast('Topildi!');
-          } else { out.innerHTML = '❌ Yozuvlar topilmadi'; out.className = 'alert alert-error'; }
-        } catch (e) { out.innerHTML = '❌ Xato: ' + e.message; out.className = 'alert alert-error'; }
-      } }, '🔍 Lookup'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'WHOIS Lookup': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔍 WHOIS Lookup'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'google.com' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const domain = wrap.querySelector('input').value.trim();
-        if (!domain) return toast('Domain kiriting', 'error');
-        try {
-          const r = await fetch('https://www.whoisxmlapi.com/whoisserver/WhoisService?domainName=' + domain + '&outputFormat=JSON&apiKey=at_demo');
-          out.innerHTML = '✅ WHOIS ma\'lumotlari:<br>Domain: ' + domain + '<br>⚠️ To\'liq ma\'lumot uchun API key kerak';
-          toast('Demo ma\'lumot!');
-        } catch (e) { out.innerHTML = '⚠️ WHOIS API demo. Backend kerak.'; out.className = 'alert alert-warn'; }
-      } }, '🔍 Lookup'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'HTTP Headers': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📋 HTTP Headers'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'https://google.com' }));
-      const out = create('pre', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const url = wrap.querySelector('input').value.trim();
-        if (!url) return toast('URL kiriting', 'error');
-        try {
-          const r = await fetch(url, { method: 'HEAD' });
-          let txt = 'Status: ' + r.status + ' ' + r.statusText + '\n\nHeaders:\n';
-          r.headers.forEach((v, k) => txt += k + ': ' + v + '\n');
-          out.textContent = txt;
-          toast('Topildi!');
-        } catch (e) { out.textContent = '❌ Xato: ' + e.message; }
-      } }, '🔍 Check'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'SSL Checker': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔒 SSL Checker'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'google.com' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const d = wrap.querySelector('input').value.trim();
-        if (!d) return toast('Domain kiriting', 'error');
-        const hasSSL = d.startsWith('https://') || Math.random() > 0.3;
-        out.innerHTML = hasSSL ? '✅ SSL/TLS faol<br>✅ HTTPS qo\'llab-quvvatlanadi<br>✅ Sertifikat mavjud' : '⚠️ SSL tekshiruvi uchun backend kerak';
-        out.className = hasSSL ? 'alert alert-success' : 'alert alert-warn';
-        toast(hasSSL ? 'SSL faol' : 'Tekshiruv kerak');
-      } }, '🔍 Check'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Port Scanner': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🚪 Port Scanner (Demo)'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, '⚠️ Haqiqiy port skanerlash uchun backend kerak. Bu demo versiya.'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'host (masalan: google.com)' }));
-      const out = create('div', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const host = wrap.querySelector('input').value.trim() || 'localhost';
-        const ports = [21, 22, 23, 25, 53, 80, 110, 143, 443, 445, 3306, 3389, 5432, 5900, 8080, 8443];
-        let txt = 'Host: ' + host + '\n\nDemo natija:\n\n';
-        ports.forEach(p => { txt += `Port ${p}: ${Math.random() > 0.6 ? 'OPEN' : 'CLOSED'}\n`; });
-        out.textContent = txt;
-        toast('Demo scan!');
-      } }, '🔍 Scan'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Hash Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '# Hash Generator'));
-      const inp = create('textarea', { class: 'tool-input', rows: '4', placeholder: 'Matn kiriting...' });
-      const out = create('div', { class: 'code-output' });
-      const gen = async () => {
-        const v = inp.value;
-        const md5 = (str) => { let h = 0; for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; } return h.toString(16).padStart(8, '0').repeat(4); };
-        const enc = new TextEncoder().encode(v);
-        const sha1 = await crypto.subtle.digest('SHA-1', enc);
-        const sha256 = await crypto.subtle.digest('SHA-256', enc);
-        out.textContent = 'MD5:    ' + md5(v) + '\n\nSHA-1:  ' + Array.from(new Uint8Array(sha1)).map(b => b.toString(16).padStart(2, '0')).join('') + '\n\nSHA-256: ' + Array.from(new Uint8Array(sha256)).map(b => b.toString(16).padStart(2, '0')).join('');
-        toast('Hash yaratildi!');
-      };
-      wrap.appendChild(inp);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: gen }, '🔐 Generate'));
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Copy'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Hash Checker': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '✓ Hash Checker'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '3', placeholder: 'Hash kiriting...' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const h = wrap.querySelector('textarea').value.trim();
-        if (!h) return toast('Hash kiriting', 'error');
-        let type = 'Noma\'lum';
-        if (h.length === 32) type = 'MD5';
-        else if (h.length === 40) type = 'SHA-1';
-        else if (h.length === 64) type = 'SHA-256';
-        else if (h.length === 128) type = 'SHA-512';
-        out.innerHTML = `📋 Hash turi: <strong>${type}</strong><br>Uzunligi: ${h.length} belgi<br>Valid: ${/^[a-f0-9]+$/i.test(h) ? '✅ Ha' : '❌ Yo\'q'}`;
-      } }, '🔍 Check'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'JWT Decoder': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, 'JWT JWT Decoder'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '3', placeholder: 'eyJhbGciOiJIUzI1NiIs...' }));
-      const out = create('pre', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const t = wrap.querySelector('textarea').value.trim();
-        if (!t) return toast('JWT kiriting', 'error');
-        try {
-          const parts = t.split('.');
-          if (parts.length !== 3) throw new Error('JWT 3 qismdan iborat bo\'lishi kerak');
-          const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
-          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-          out.textContent = 'HEADER:\n' + JSON.stringify(header, null, 2) + '\n\nPAYLOAD:\n' + JSON.stringify(payload, null, 2) + '\n\nSIGNATURE: ' + parts[2];
-          toast('Decoded!');
-        } catch (e) { out.textContent = '❌ Xato: ' + e.message; }
-      } }, '🔓 Decode'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'User-Agent': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🖥️ User-Agent'));
-      const ua = navigator.userAgent;
-      const out = create('pre', { class: 'code-output' }, 'User-Agent: ' + ua + '\n\nPlatform: ' + navigator.platform + '\nLanguage: ' + navigator.language + '\nScreen: ' + screen.width + 'x' + screen.height + '\nCores: ' + navigator.hardwareConcurrency + '\nOnline: ' + navigator.onLine + '\nCookies: ' + navigator.cookieEnabled);
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(ua) }, '📋 Copy UA'));
-      return wrap;
-    },
-    'Password Strength': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔑 Password Strength'));
-      const inp = create('input', { class: 'tool-input', type: 'text', placeholder: 'Parol kiriting...' });
-      const out = create('div', { class: 'alert' });
-      const meter = create('div', { class: 'pwd-meter' });
-      inp.addEventListener('input', () => {
-        const p = inp.value;
-        let score = 0;
-        if (p.length >= 8) score++;
-        if (p.length >= 12) score++;
-        if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
-        if (/\d/.test(p)) score++;
-        if (/[^A-Za-z0-9]/.test(p)) score++;
-        const labels = ['Juda zaif', 'Zaif', 'O\'rtacha', 'Yaxshi', 'Kuchli', 'Juda kuchli'];
-        const colors = ['#ef4444', '#f59e0b', '#eab308', '#84cc16', '#10b981', '#059669'];
-        out.className = 'alert alert-' + (score <= 2 ? 'error' : score <= 3 ? 'warn' : 'success');
-        out.innerHTML = `Kuchlilik: <strong style="color:${colors[score]}">${labels[score]}</strong> (${score}/5)`;
-        meter.innerHTML = '<div class="pwd-meter-bar" style="width:' + (score * 20) + '%;background:' + colors[score] + '"></div>';
-      });
-      wrap.appendChild(inp);
-      wrap.appendChild(meter);
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Subdomain Finder': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🌐 Subdomain Finder'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'google.com' }));
-      const out = create('div', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const d = wrap.querySelector('input').value.trim();
-        if (!d) return toast('Domain kiriting', 'error');
-        const subs = ['www', 'mail', 'ftp', 'api', 'admin', 'blog', 'shop', 'dev', 'staging', 'cdn', 'cloud', 'm', 'mobile', 'app'];
-        let txt = 'Tekshirilmoqda: ' + d + '\n\n';
-        for (const s of subs) {
-          txt += `• ${s}.${d} ... `;
-          try { const r = await fetch(`https://${s}.${d}`, { mode: 'no-cors' }); txt += '✅\n'; } catch (e) { txt += '❌\n'; }
-        }
-        out.textContent = txt;
-        toast('Tugadi!');
-      } }, '🔍 Find'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'HTTP Status': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📊 HTTP Status Codes'));
-      const codes = [
-        [200, 'OK', 'So\'rov muvaffaqiyatli'], [201, 'Created', 'Yaratildi'], [204, 'No Content', 'Kontent yo\'q'],
-        [301, 'Moved Permanently', 'Doimiy ko\'chirildi'], [302, 'Found', 'Topildi'], [304, 'Not Modified', 'O\'zgartirilmagan'],
-        [400, 'Bad Request', 'Yomon so\'rov'], [401, 'Unauthorized', 'Avtorizatsiya kerak'], [403, 'Forbidden', 'Taqiqlangan'],
-        [404, 'Not Found', 'Topilmadi'], [405, 'Method Not Allowed', 'Usul ruxsat berilmagan'], [429, 'Too Many Requests', 'Juda ko\'p so\'rovlar'],
-        [500, 'Internal Server Error', 'Server xatosi'], [502, 'Bad Gateway', 'Yomon shlyuz'], [503, 'Service Unavailable', 'Xizmat mavjud emas']
-      ];
-      const out = create('div', { class: 'code-output' });
-      out.innerHTML = codes.map(c => `<strong style="color:var(--primary)">${c[0]}</strong> ${c[1]} - <span style="color:var(--text-2)">${c[2]}</span>`).join('<br>');
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Cyber News': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📰 Cyber News'));
-      const news = [
-        '🔓 Yangi zero-day zaiflik Windows da topildi',
-        '🛡️ AI kiberxavfsizlikda yangi imkoniyatlar ochmoqda',
-        '⚠️ Phishing hujumlari 30% ga oshdi',
-        '🔐 Quantum-safe shifrlash standartlari e\'lon qilindi',
-        '🌐 Yangi ransomware oilasi aniqlandi'
-      ];
-      const list = create('div', { class: 'news-list' });
-      news.forEach(n => list.appendChild(create('div', { class: 'news-item' }, n)));
-      wrap.appendChild(list);
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Yangiliklar har kuni yangilanadi'));
-      return wrap;
-    },
-    'Security Tips': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '💡 Security Tips'));
-      const tips = [
-        '🔑 Har xil saytlar uchun turli parollar ishlating',
-        '🛡️ 2FA (ikki bosqichli autentifikatsiya) yoqing',
-        '📥 Noma\'lum havolalarni ochmang',
-        '🔄 Dasturlarni yangilab turing',
-        '💾 Muhim ma\'lumotlarni zaxiralang',
-        '🌐 VPN ishlatishni o\'rganing',
-        '🔒 HTTPS saytlardan foydalaning',
-        '⚠️ Wi-Fi tarmoqlarida ehtiyot bo\'ling',
-        '📧 Shubhali xatlar ochmang',
-        '🛡️ Antivirus dasturini o\'rnating'
-      ];
-      const list = create('div', { class: 'tips-list' });
-      tips.forEach(t => list.appendChild(create('div', { class: 'tip-item' }, t)));
-      wrap.appendChild(list);
-      return wrap;
-    },
-
-    // ===== OSINT =====
-    'Username Search': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '👤 Username Search'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'username' }));
-      const out = create('div', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const u = wrap.querySelector('input').value.trim();
-        if (!u) return toast('Username kiriting', 'error');
-        const sites = [
-          ['GitHub', 'https://github.com/' + u],
-          ['Twitter/X', 'https://twitter.com/' + u],
-          ['Instagram', 'https://instagram.com/' + u],
-          ['Telegram', 'https://t.me/' + u],
-          ['Reddit', 'https://reddit.com/user/' + u],
-          ['YouTube', 'https://youtube.com/@' + u],
-          ['TikTok', 'https://tiktok.com/@' + u],
-          ['Facebook', 'https://facebook.com/' + u]
-        ];
-        out.innerHTML = '🔍 "' + u + '" qidiruv natijalari:<br><br>' + sites.map(s => `• <a href="${s[1]}" target="_blank" style="color:var(--primary)">${s[0]}</a>`).join('<br>');
-        toast('Tayyor!');
-      } }, '🔍 Search'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Email Lookup': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📧 Email Lookup'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'email@example.com' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const e = wrap.querySelector('input').value.trim();
-        if (!e || !e.includes('@')) return toast('Email kiriting', 'error');
-        const [user, domain] = e.split('@');
-        out.innerHTML = `📧 Email tahlili:<br>User: ${user}<br>Domain: ${domain}<br>Format: ${/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? '✅ To\'g\'ri' : '❌ Noto\'g\'ri'}<br><br>⚠️ To\'liq ma\'lumot uchun backend kerak`;
-        toast('Tahlil qilindi!');
-      } }, '🔍 Lookup'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Phone Lookup': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📱 Phone Lookup'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: '+998901234567' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const p = wrap.querySelector('input').value.trim();
-        if (!p) return toast('Telefon raqam kiriting', 'error');
-        const country = p.startsWith('+998') ? 'Uzbekistan 🇺🇿' : p.startsWith('+7') ? 'Russia 🇷🇺' : p.startsWith('+1') ? 'USA/Canada 🇺🇸' : p.startsWith('+90') ? 'Turkey 🇹🇷' : 'Unknown';
-        out.innerHTML = `📱 Telefon tahlili:<br>Raqam: ${p}<br>Mamlakat: ${country}<br>Uzunligi: ${p.length} belgi<br><br>⚠️ To\'liq ma\'lumot uchun backend kerak`;
-        toast('Tahlil!');
-      } }, '🔍 Lookup'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Domain Lookup': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🌐 Domain Lookup'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'google.com' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const d = wrap.querySelector('input').value.trim();
-        if (!d) return toast('Domain kiriting', 'error');
-        try {
-          const r = await fetch('https://dns.google/resolve?name=' + d);
-          const data = await r.json();
-          out.innerHTML = `🌐 Domain: <strong>${d}</strong><br>Status: ${data.Status === 0 ? '✅ Aktiv' : '❌ Muammo'}<br>IP: ${data.Answer ? data.Answer[0].data : 'N/A'}<br>SSL: ${d.includes('https') ? 'Faol' : 'Tekshirish kerak'}`;
-          toast('Topildi!');
-        } catch (e) { out.innerHTML = '❌ Xato'; out.className = 'alert alert-error'; }
-      } }, '🔍 Lookup'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Metadata Viewer': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🖼️ Metadata Viewer'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Fayl metadata ko\'rish uchun fayl yuklang'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'file' }));
-      const out = create('pre', { class: 'code-output' });
-      wrap.querySelector('input').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        out.textContent = '📁 Fayl ma\'lumotlari:\n\n';
-        out.textContent += 'Nom: ' + f.name + '\n';
-        out.textContent += 'Hajmi: ' + (f.size / 1024).toFixed(2) + ' KB\n';
-        out.textContent += 'Tur: ' + f.type + '\n';
-        out.textContent += 'Oxirgi o\'zgartirish: ' + new Date(f.lastModified).toLocaleString() + '\n';
-        toast('Yuklandi!');
-      });
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'EXIF Viewer': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📷 EXIF Viewer'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Rasm EXIF ma\'lumotlari (Demo)'));
-      const img = create('img', { src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="%238B5CF6" width="400" height="300"/><text x="200" y="150" fill="white" text-anchor="middle" font-size="24">📷 Demo Image</text></svg>', style: 'max-width:100%;border-radius:12px;margin:20px 0' });
-      const out = create('pre', { class: 'code-output' }, 'EXIF ma\'lumotlari:\n\nKamera: Demo\nISO: 100\nDiafragma: f/1.8\nPanjara: 1/100\nFokus: 50mm\nGPS: 41.2995, 69.2401\n\n⚠️ Haqiqiy EXIF uchun rasm yuklash kerak');
-      wrap.appendChild(img);
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Social Finder': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📱 Social Finder'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'Username' }));
-      const out = create('div', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const u = wrap.querySelector('input').value.trim();
-        if (!u) return toast('Username kiriting', 'error');
-        const links = [
-          ['GitHub', 'https://github.com/' + u],
-          ['Twitter', 'https://twitter.com/' + u],
-          ['Instagram', 'https://instagram.com/' + u],
-          ['TikTok', 'https://tiktok.com/@' + u],
-          ['YouTube', 'https://youtube.com/@' + u],
-          ['Telegram', 'https://t.me/' + u],
-          ['Reddit', 'https://reddit.com/user/' + u],
-          ['Medium', 'https://medium.com/@' + u],
-          ['Pinterest', 'https://pinterest.com/' + u],
-          ['LinkedIn', 'https://linkedin.com/in/' + u]
-        ];
-        out.innerHTML = '🔍 Ijtimoiy tarmoqlarda "' + u + '":<br><br>' + links.map(l => `• <a href="${l[1]}" target="_blank" style="color:var(--primary)">${l[0]}</a>`).join('<br>');
-        toast('Tayyor!');
-      } }, '🔍 Find'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Public Info': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📰 Public Info'));
-      const info = {
-        'IP': 'Demo',
-        'Shahar': 'Tashkent',
-        'Mamlakat': 'Uzbekistan',
-        'Brauzer': navigator.userAgent.split(' ').slice(-1)[0],
-        'OS': navigator.platform,
-        'Til': navigator.language,
-        'Ekran': `${screen.width}x${screen.height}`,
-        'CPU': `${navigator.hardwareConcurrency} yadroli`,
-        'RAM': `${navigator.deviceMemory || 'Noma\'lum'} GB`
-      };
-      const out = create('div', { class: 'alert alert-success' });
-      out.innerHTML = '🌐 Sizning ochiq ma\'lumotlaringiz:<br><br>' + Object.entries(info).map(([k, v]) => `<strong>${k}:</strong> ${v}`).join('<br>');
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Breach Checker': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '⚠️ Breach Checker'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'email@example.com' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const e = wrap.querySelector('input').value.trim();
-        if (!e) return toast('Email kiriting', 'error');
-        out.innerHTML = `📧 ${e}<br><br>⚠️ Tekshirish uchun haveibeenpwned.com API kerak.<br>Demo: ${Math.random() > 0.7 ? '❌ Breach topildi' : '✅ Xavfsiz'}`;
-        toast('Demo tekshiruv!');
-      } }, '🔍 Check'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-
-    // ===== DOWNLOADER PLACEHOLDER =====
-    'YouTube': () => downloader('YouTube', 'youtube.com'),
-    'Instagram': () => downloader('Instagram', 'instagram.com'),
-    'TikTok': () => downloader('TikTok', 'tiktok.com'),
-    'Facebook': () => downloader('Facebook', 'facebook.com'),
-    'X (Twitter)': () => downloader('X (Twitter)', 'twitter.com'),
-    'Reddit': () => downloader('Reddit', 'reddit.com'),
-    'Pinterest': () => downloader('Pinterest', 'pinterest.com'),
-    'Threads': () => downloader('Threads', 'threads.net'),
-    'Telegram Media': () => downloader('Telegram Media', 't.me'),
-    'Audio Downloader': () => downloader('Audio Downloader', 'audio'),
-    'Playlist': () => downloader('Playlist', 'playlist'),
-
-    // ===== TELEGRAM =====
-    'Bot Generator': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🤖 Bot Generator'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Telegram bot yaratish uchun BotFather dan @BotFather ga yozing'));
-      const code = create('pre', { class: 'code-output' }, `// Python Telegram Bot
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
-
-def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Salom! Men KRYZEN botman.')
-
-def main():
-    updater = Updater("YOUR_BOT_TOKEN", use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()`);
-      wrap.appendChild(code);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => copy(code.textContent) }, '📋 Copy Code'));
-      return wrap;
-    },
-    'Bot Templates': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📋 Bot Templates'));
-      const templates = ['Echo Bot', 'Quiz Bot', 'Weather Bot', 'Translator Bot', 'Poll Bot', 'Welcome Bot', 'Moderator Bot', 'File Manager Bot'];
-      const list = create('div', { class: 'template-list' });
-      templates.forEach(t => list.appendChild(create('div', { class: 'template-item' }, '🤖 ' + t)));
-      wrap.appendChild(list);
-      return wrap;
-    },
-    'Username Checker': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '@ Username Checker'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'username (5-32 belgi)' }));
-      const out = create('div', { class: 'alert' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const u = wrap.querySelector('input').value.trim();
-        if (!u) return toast('Username kiriting', 'error');
-        const valid = /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(u);
-        out.className = 'alert alert-' + (valid ? 'success' : 'error');
-        out.innerHTML = valid ? '✅ Username formati to\'g\'ri' : '❌ Noto\'g\'ri format. 5-32 belgi, harf bilan boshlangan';
-      } }, '🔍 Check'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Telegram WebApp': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🌐 Telegram WebApp'));
-      wrap.appendChild(create('p', { class: 'tool-desc' }, 'Telegram Web App yaratish uchun namunaviy kod'));
-      const code = create('pre', { class: 'code-output' }, `// HTML Telegram Web App
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body>
-  <h1>KRYZEN WebApp</h1>
-  <button onclick="tg.sendData('Hello')">Yuborish</button>
-  <script>
-    let tg = window.Telegram.WebApp;
-    tg.ready();
-  </script>
-</body>
-</html>`);
-      wrap.appendChild(code);
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => copy(code.textContent) }, '📋 Copy'));
-      return wrap;
-    },
-    'Deep Link': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔗 Deep Link Generator'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'bot username', value: 'mybot' }));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'start parametri', value: 'ref123' }));
-      const out = create('textarea', { class: 'tool-input', rows: '3', readonly: 'readonly' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const inputs = wrap.querySelectorAll('input');
-        out.value = `https://t.me/${inputs[0].value}?start=${inputs[1].value}`;
-        toast('Yaratildi!');
-      } }, 'Generate'));
-      wrap.appendChild(out);
-      wrap.appendChild(create('button', { class: 'btn btn-secondary', onclick: () => copy(out.value) }, '📋 Copy'));
-      return wrap;
-    },
-    'Webhook Tester': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🪝 Webhook Tester'));
-      wrap.appendChild(create('input', { class: 'tool-input', placeholder: 'Webhook URL' }));
-      const out = create('pre', { class: 'code-output' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: async () => {
-        const url = wrap.querySelector('input').value.trim();
-        if (!url) return toast('URL kiriting', 'error');
-        try {
-          const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test: true, message: 'Webhook test' }) });
-          out.textContent = `✅ Status: ${r.status}\nResponse OK`;
-          toast('Yuborildi!');
-        } catch (e) { out.textContent = '❌ Xato: ' + e.message; }
-      } }, 'Send Test'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Channel Toolkit': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📢 Channel Toolkit'));
-      const tools = [
-        '📊 Post Scheduler (demo)',
-        '👥 Subscriber Counter (demo)',
-        '📈 Analytics (demo)',
-        '🔄 Auto-Poster (demo)',
-        '💬 Comment Manager (demo)',
-        '📌 Pin Message (demo)'
-      ];
-      const list = create('div', { class: 'tool-list' });
-      tools.forEach(t => list.appendChild(create('div', { class: 'tool-item' }, t)));
-      wrap.appendChild(list);
-      return wrap;
-    },
-    'Message Formatter': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '✉️ Message Formatter'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '4', placeholder: 'Matn...' }));
-      const out = create('pre', { class: 'code-output' });
-      wrap.appendChild(create('div', { class: 'btn-group' },
-        create('button', { class: 'btn btn-primary', onclick: () => { out.textContent = '**' + wrap.querySelector('textarea').value + '**'; } }, 'Bold'),
-        create('button', { class: 'btn btn-secondary', onclick: () => { out.textContent = '__' + wrap.querySelector('textarea').value + '__'; } }, 'Italic'),
-        create('button', { class: 'btn btn-secondary', onclick: () => { out.textContent = '`' + wrap.querySelector('textarea').value + '`'; } }, 'Code'),
-        create('button', { class: 'btn btn-secondary', onclick: () => copy(out.textContent) }, '📋 Copy')
-      ));
-      wrap.appendChild(out);
-      return wrap;
-    },
-
-    // ===== FILES =====
-    'PDF Merge': () => files('PDF Merge', 'PDF fayllarni birlashtirish (demo)'),
-    'PDF Split': () => files('PDF Split', 'PDFni bo\'lish (demo)'),
-    'OCR': () => files('OCR', 'Rasmdan matn olish (demo)'),
-    'ZIP Creator': () => files('ZIP Creator', 'ZIP arxiv yaratish (demo)'),
-    'Image Compressor': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '📦 Image Compressor'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'file', accept: 'image/*' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.querySelector('input').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width; canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob((blob) => {
-              out.innerHTML = `✅ Siqildi!<br>Asl: ${(f.size/1024).toFixed(2)} KB<br>Yangi: ${(blob.size/1024).toFixed(2)} KB<br>Tejalgan: ${((1-blob.size/f.size)*100).toFixed(1)}%`;
-              toast('Siqildi!');
-            }, 'image/jpeg', 0.6);
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(f);
-      });
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Image Converter': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '🔄 Image Converter'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'file', accept: 'image/*' }));
-      const format = create('select', { class: 'tool-input' });
-      ['image/png', 'image/jpeg', 'image/webp'].forEach(f => format.appendChild(create('option', { value: f }, f.split('/')[1].toUpperCase())));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.querySelector('input').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width; canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob((blob) => {
-              const url = URL.createObjectURL(blob);
-              out.innerHTML = `✅ Konvertatsiya qilindi!<br>Format: ${format.value.split('/')[1]}<br>Hajmi: ${(blob.size/1024).toFixed(2)} KB`;
-              out.appendChild(create('a', { class: 'btn btn-primary', href: url, download: 'converted.' + format.value.split('/')[1], style: 'margin-top:10px' }, '⬇️ Yuklab olish'));
-              toast('Tayyor!');
-            }, format.value);
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(f);
-      });
-      wrap.appendChild(format);
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'Text Compare': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '⚖️ Text Compare'));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '4', placeholder: '1-matn...' }));
-      wrap.appendChild(create('textarea', { class: 'tool-input', rows: '4', placeholder: '2-matn...' }));
-      const out = create('div', { class: 'alert alert-success' });
-      wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-        const tas = wrap.querySelectorAll('textarea');
-        const t1 = tas[0].value, t2 = tas[1].value;
-        if (!t1 || !t2) return toast('Ikkala matnni kiriting', 'error');
-        const same = t1 === t2;
-        out.innerHTML = same ? '✅ Matnlar bir xil' : '⚠️ Matnlar farqli<br>1-uzunligi: ' + t1.length + '<br>2-uzunligi: ' + t2.length;
-        out.className = 'alert alert-' + (same ? 'success' : 'warn');
-      } }, '⚖️ Compare'));
-      wrap.appendChild(out);
-      return wrap;
-    },
-    'File Hash': () => {
-      const wrap = create('div', { class: 'tool-wrap' });
-      wrap.appendChild(create('h2', {}, '#️⃣ File Hash'));
-      wrap.appendChild(create('input', { class: 'tool-input', type: 'file' }));
-      const out = create('pre', { class: 'code-output' });
-      wrap.querySelector('input').addEventListener('change', async (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const buf = await f.arrayBuffer();
-        const hash = await crypto.subtle.digest('SHA-256', buf);
-        const hex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-        out.textContent = `📁 ${f.name}\n\nSHA-256: ${hex}\n\nHajmi: ${(f.size/1024).toFixed(2)} KB`;
-        toast('Hisoblandi!');
-      });
-      wrap.appendChild(out);
-      return wrap;
-    }
-  };
-
-  // Helper: downloader
-  function downloader(name, domain) {
-    const wrap = create('div', { class: 'tool-wrap' });
-    wrap.appendChild(create('h2', {}, '📥 ' + name + ' Downloader'));
-    wrap.appendChild(create('p', { class: 'tool-desc' }, `${domain} dan video/audio yuklab olish`));
-    wrap.appendChild(create('input', { class: 'tool-input', placeholder: `${domain} dan URL kiriting...` }));
-    const out = create('div', { class: 'alert alert-success' });
-    wrap.appendChild(create('button', { class: 'btn btn-primary', onclick: () => {
-      const url = wrap.querySelector('input').value.trim();
-      if (!url) return toast('URL kiriting', 'error');
-      if (!url.includes(domain)) return toast('Noto\'g\'ri URL', 'error');
-      out.innerHTML = `✅ URL qabul qilindi:<br>${url}<br><br>⚠️ Backend kerak. Demo versiyada yuklab bo\'lmaydi.`;
-      toast('Tayyor!');
-    } }, '⬇️ Yuklab olish'));
-    wrap.appendChild(out);
-    return wrap;
+async function callAPI(endpoint, options = {}) {
+  try {
+    const res = await fetch(API_BASE + endpoint, options);
+    if (res.ok) return await res.json();
+    throw new Error('Vercel API not available');
+  } catch (e) {
+    // Try GitHub Pages API (will fail, that's ok)
+    try {
+      const res2 = await fetch(API_FALLBACK + endpoint, options);
+      if (res2.ok) return await res2.json();
+    } catch (e2) {}
+    throw e;
   }
+}
 
-  // Helper: files demo
-  function files(name, desc) {
-    const wrap = create('div', { class: 'tool-wrap' });
-    wrap.appendChild(create('h2', {}, '📁 ' + name));
-    wrap.appendChild(create('p', { class: 'tool-desc' }, desc));
-    wrap.appendChild(create('div', { class: 'alert alert-warn' }, '⚠️ Backend kerak. Browserda to\'liq ishlashi uchun server-side processing talab qilinadi.'));
-    return wrap;
+function createModal(title, content) {
+  // Remove existing
+  const existing = document.getElementById('toolModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'toolModal';
+  modal.className = 'tool-modal active';
+  modal.innerHTML = `
+    <div class="tool-modal-content">
+      <div class="tool-modal-header">
+        <h2>${title}</h2>
+        <button class="tool-modal-close" onclick="closeTool()">✕</button>
+      </div>
+      <div class="tool-modal-body">${content}</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeTool();
+  });
+}
+
+function closeTool() {
+  const m = document.getElementById('toolModal');
+  if (m) m.remove();
+}
+window.closeTool = closeTool;
+
+function showLoading(text = 'Yuklanmoqda...') {
+  return `<div class="loading-state"><div class="spinner"></div><p>${text}</p></div>`;
+}
+
+function showError(msg) {
+  return `<div class="alert alert-error">❌ ${msg}</div>`;
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    if (window.toast) window.toast('Nusxalandi!');
+  });
+}
+
+// ============================================================
+// AI CHAT
+// ============================================================
+window.openTool = async function(toolName) {
+  const t = toolName.toLowerCase();
+
+  // AI TOOLS
+  if (t === 'ai chat') {
+    createModal('💬 AI Chat', `
+      <div class="ai-chat-container">
+        <div id="aiChatMessages" class="ai-chat-messages">
+          <div class="ai-message bot">Salom! Men KRYZEN AI yordamchisiman. Sizga qanday yordam bera olaman?</div>
+        </div>
+        <div class="ai-chat-input">
+          <input type="text" id="aiChatInput" placeholder="Xabar yozing..." autocomplete="off">
+          <button onclick="window.sendAIMessage()" class="btn btn-primary">Yuborish</button>
+        </div>
+      </div>
+    `);
+    setTimeout(() => {
+      const input = document.getElementById('aiChatInput');
+      if (input) {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') window.sendAIMessage();
+        });
+        input.focus();
+      }
+    }, 100);
   }
+  else if (t.includes('kod yozuvchi') || t.includes('code generator')) {
+    createModal('👨‍💻 Kod Yozuvchi AI', `
+      <div class="tool-form">
+        <label>Til:</label>
+        <select id="codeLang" class="form-select">
+          <option>JavaScript</option><option>Python</option><option>HTML</option>
+          <option>CSS</option><option>Java</option><option>C++</option>
+          <option>Go</option><option>Rust</option>
+        </select>
+        <label>Vazifa tavsifi:</label>
+        <textarea id="codePrompt" class="form-textarea" rows="3" placeholder="Masalan: 1 dan 100 gacha bo'lgan sonlarni chiqaruvchi funksiya"></textarea>
+        <button class="btn btn-primary" onclick="window.generateCode()">🚀 Kod Yaratish</button>
+        <div id="codeResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('tarjimon')) {
+    createModal('🌐 Tarjimon', `
+      <div class="tool-form">
+        <label>Tarjima qilish:</label>
+        <textarea id="trText" class="form-textarea" rows="4" placeholder="Matn kiriting...">Hello, how are you?</textarea>
+        <div class="form-row">
+          <select id="trFrom" class="form-select">
+            <option value="auto">Auto</option>
+            <option value="en">English</option>
+            <option value="uz">Uzbek</option>
+            <option value="ru">Russian</option>
+            <option value="tr">Turkish</option>
+            <option value="ar">Arabic</option>
+            <option value="zh">Chinese</option>
+          </select>
+          <span>→</span>
+          <select id="trTo" class="form-select">
+            <option value="uz">Uzbek</option>
+            <option value="en" selected>English</option>
+            <option value="ru">Russian</option>
+            <option value="tr">Turkish</option>
+            <option value="ar">Arabic</option>
+            <option value="zh">Chinese</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="window.translateText()">🌐 Tarjima</button>
+        <div id="trResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('weather') || t.includes('ob-havo')) {
+    createModal('🌤 Ob-havo', `
+      <div class="tool-form">
+        <label>Shahar nomi:</label>
+        <input type="text" id="weatherCity" class="form-input" value="Tashkent" placeholder="Tashkent, London, New York...">
+        <button class="btn btn-primary" onclick="window.getWeather()">🌤 Ob-havoni ko'rish</button>
+        <div id="weatherResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('news') || t.includes('yangilik')) {
+    createModal('📰 Yangiliklar', `
+      <div class="tool-form">
+        <label>Kategoriya:</label>
+        <select id="newsCategory" class="form-select">
+          <option value="tech">Texnologiya</option>
+          <option value="world">Dunyo</option>
+          <option value="business">Biznes</option>
+          <option value="science">Fan</option>
+          <option value="cyber">Kiberxavfsizlik</option>
+          <option value="ai">AI</option>
+          <option value="programming">Dasturlash</option>
+          <option value="gaming">O'yinlar</option>
+        </select>
+        <button class="btn btn-primary" onclick="window.getNews()">📰 Yangiliklarni yuklash</button>
+        <div id="newsResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('crypto') || t.includes('kriptovalyuta')) {
+    createModal('💰 Kriptovalyuta Narxlari', `
+      <div class="tool-form">
+        <button class="btn btn-primary" onclick="window.getCrypto()">💰 Narxlarni ko'rish</button>
+        <div id="cryptoResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('currency') || t.includes('valyuta')) {
+    createModal('💱 Valyuta Kurslari', `
+      <div class="tool-form">
+        <label>Asosiy valyuta:</label>
+        <input type="text" id="curBase" class="form-input" value="USD" placeholder="USD, EUR, UZS...">
+        <button class="btn btn-primary" onclick="window.getCurrency()">💱 Kurslarni ko'rish</button>
+        <div id="curResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('dictionary') || t.includes('lug\'at')) {
+    createModal('📖 Lug\'at', `
+      <div class="tool-form">
+        <label>So\'z:</label>
+        <input type="text" id="dictWord" class="form-input" placeholder="hello, world, code...">
+        <button class="btn btn-primary" onclick="window.getDict()">🔍 Qidirish</button>
+        <div id="dictResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('quote') || t.includes('hikmat')) {
+    createModal('💭 Hikmatli So\'z', `
+      <div class="tool-form">
+        <button class="btn btn-primary" onclick="window.getQuote()">🎲 Yangi hikmat</button>
+        <div id="quoteResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('joke') || t.includes('hazil')) {
+    createModal('😄 Hazil', `
+      <div class="tool-form">
+        <button class="btn btn-primary" onclick="window.getJoke()">😄 Yangi hazil</button>
+        <div id="jokeResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  // DEV TOOLS
+  else if (t.includes('json formatter')) {
+    createModal('{} JSON Formatter', `
+      <div class="tool-form">
+        <textarea id="jsonInput" class="form-textarea" rows="8" placeholder='{"name":"KRYZEN","age":1}'>{"name":"KRYZEN HUB","tools":80,"active":true,"tags":["AI","Cyber","Dev"]}</textarea>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="window.formatJSON()">✨ Format</button>
+          <button class="btn" onclick="window.minifyJSON()">📦 Minify</button>
+          <button class="btn" onclick="window.validateJSON()">✓ Validate</button>
+          <button class="btn" onclick="document.getElementById('jsonInput').value=''">🗑 Clear</button>
+        </div>
+        <div id="jsonResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('json validator')) {
+    createModal('✓ JSON Validator', `
+      <div class="tool-form">
+        <textarea id="jsonVInput" class="form-textarea" rows="8" placeholder='{"a": 1}'></textarea>
+        <button class="btn btn-primary" onclick="window.validateJSON2()">✓ Tekshirish</button>
+        <div id="jsonVResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('base64 encode')) {
+    createModal('B64 Base64 Encode', `
+      <div class="tool-form">
+        <textarea id="b64eInput" class="form-textarea" rows="4" placeholder="Matn kiriting">KRYZEN HUB</textarea>
+        <button class="btn btn-primary" onclick="window.b64encode()">🔒 Encode</button>
+        <div id="b64eResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('base64 decode')) {
+    createModal('B64 Base64 Decode', `
+      <div class="tool-form">
+        <textarea id="b64dInput" class="form-textarea" rows="4" placeholder="Base64 matn">S1JZRU4gSFVC</textarea>
+        <button class="btn btn-primary" onclick="window.b64decode()">🔓 Decode</button>
+        <div id="b64dResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('url encode')) {
+    createModal('URL URL Encode', `
+      <div class="tool-form">
+        <textarea id="urleInput" class="form-textarea" rows="3">https://kryzen.com/hello world?test=1&value=2</textarea>
+        <button class="btn btn-primary" onclick="window.urlEncode()">🔒 Encode</button>
+        <div id="urleResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('url decode')) {
+    createModal('URL URL Decode', `
+      <div class="tool-form">
+        <textarea id="urldInput" class="form-textarea" rows="3">https%3A%2F%2Fkryzen.com%2Fhello%20world%3Ftest%3D1%26value%3D2</textarea>
+        <button class="btn btn-primary" onclick="window.urlDecode()">🔓 Decode</button>
+        <div id="urldResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('regex')) {
+    createModal('.* Regex Tester', `
+      <div class="tool-form">
+        <label>Pattern:</label>
+        <input type="text" id="regexPattern" class="form-input" value="\\b[A-Z][a-z]+\\b" placeholder="regex pattern">
+        <label>Flags:</label>
+        <input type="text" id="regexFlags" class="form-input" value="g" placeholder="g, i, m...">
+        <label>Test matn:</label>
+        <textarea id="regexText" class="form-textarea" rows="4">Hello World from KRYZEN HUB</textarea>
+        <button class="btn btn-primary" onclick="window.testRegex()">▶ Test</button>
+        <div id="regexResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('uuid')) {
+    createModal('🔑 UUID Generator', `
+      <div class="tool-form">
+        <label>Soni:</label>
+        <input type="number" id="uuidCount" class="form-input" value="5" min="1" max="100">
+        <button class="btn btn-primary" onclick="window.genUUIDs()">🔑 Yaratish</button>
+        <div id="uuidResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('password generator') || t === 'password') {
+    createModal('🔐 Password Generator', `
+      <div class="tool-form">
+        <label>Uzunligi:</label>
+        <input type="range" id="pwLen" min="8" max="64" value="20">
+        <span id="pwLenVal">20</span>
+        <label>Soni:</label>
+        <input type="number" id="pwCount" class="form-input" value="3" min="1" max="20">
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="pwUp" checked> Katta harflar (A-Z)</label>
+          <label><input type="checkbox" id="pwLo" checked> Kichik harflar (a-z)</label>
+          <label><input type="checkbox" id="pwNum" checked> Raqamlar (0-9)</label>
+          <label><input type="checkbox" id="pwSym" checked> Belgilar (!@#$)</label>
+        </div>
+        <button class="btn btn-primary" onclick="window.genPasswords()">🔐 Yaratish</button>
+        <div id="pwResult" class="tool-result"></div>
+      </div>
+    `);
+    setTimeout(() => {
+      const len = document.getElementById('pwLen');
+      const val = document.getElementById('pwLenVal');
+      if (len && val) len.oninput = () => val.textContent = len.value;
+    }, 100);
+  }
+  else if (t.includes('qr code') || t === 'qrcode') {
+    createModal('QR QR Code', `
+      <div class="tool-form">
+        <label>Matn yoki URL:</label>
+        <input type="text" id="qrData" class="form-input" value="https://kryzensys.github.io/kryzen-hub/">
+        <label>O\'lchami (px):</label>
+        <input type="number" id="qrSize" class="form-input" value="300" min="100" max="800">
+        <button class="btn btn-primary" onclick="window.genQR()">QR Yaratish</button>
+        <div id="qrResult" class="tool-result" style="text-align:center"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('color picker') || t === 'color') {
+    createModal('🎨 Color Picker', `
+      <div class="tool-form">
+        <input type="color" id="cpPicker" value="#8B5CF6" class="form-color">
+        <div id="cpResult" class="tool-result"></div>
+      </div>
+    `);
+    setTimeout(() => {
+      const picker = document.getElementById('cpPicker');
+      const result = document.getElementById('cpResult');
+      if (picker && result) {
+        const update = () => {
+          const hex = picker.value;
+          const r = parseInt(hex.slice(1,3), 16);
+          const g = parseInt(hex.slice(3,5), 16);
+          const b = parseInt(hex.slice(5,7), 16);
+          result.innerHTML = `
+            <div style="background:${hex};height:120px;border-radius:12px;margin:16px 0"></div>
+            <div class="kv"><strong>HEX:</strong> <code>${hex}</code> <button class="btn-mini" onclick="copyToClipboard('${hex}')">📋</button></div>
+            <div class="kv"><strong>RGB:</strong> <code>rgb(${r}, ${g}, ${b})</code> <button class="btn-mini" onclick="copyToClipboard('rgb(${r}, ${g}, ${b})')">📋</button></div>
+            <div class="kv"><strong>HSL:</strong> <code>hsl(${Math.round(r*360/255)}, ${Math.round(g*100/255)}%, ${Math.round(b*100/255)}%)</code></div>
+          `;
+        };
+        picker.oninput = update;
+        update();
+      }
+    }, 100);
+  }
+  else if (t.includes('gradient')) {
+    createModal('🌈 Gradient Generator', `
+      <div class="tool-form">
+        <div class="form-row">
+          <input type="color" id="gC1" value="#8B5CF6" class="form-color">
+          <input type="color" id="gC2" value="#EC4899" class="form-color">
+        </div>
+        <label>Yo\'nalish:</label>
+        <select id="gDir" class="form-select">
+          <option value="to right">Chapdan o'ngga</option>
+          <option value="45deg">Diagonal 45°</option>
+          <option value="135deg">Diagonal 135°</option>
+          <option value="to bottom">Yuqoridan pastga</option>
+          <option value="circle">Doira</option>
+        </select>
+        <div id="gResult" class="tool-result"></div>
+      </div>
+    `);
+    setTimeout(() => {
+      const update = () => {
+        const c1 = document.getElementById('gC1').value;
+        const c2 = document.getElementById('gC2').value;
+        const dir = document.getElementById('gDir').value;
+        const css = dir === 'circle' ? `radial-gradient(circle, ${c1}, ${c2})` : `linear-gradient(${dir}, ${c1}, ${c2})`;
+        const result = document.getElementById('gResult');
+        if (result) {
+          result.innerHTML = `
+            <div style="background:${css};height:120px;border-radius:12px;margin:16px 0"></div>
+            <pre class="code-block">background: ${css};</pre>
+            <button class="btn btn-primary" onclick="copyToClipboard('background: ${css};')">📋 CSS Nusxalash</button>
+          `;
+        }
+      };
+      ['gC1','gC2','gDir'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.oninput = update;
+      });
+      update();
+    }, 100);
+  }
+  else if (t.includes('lorem')) {
+    createModal('📄 Lorem Ipsum', `
+      <div class="tool-form">
+        <label>Paragraflar soni:</label>
+        <input type="number" id="loremP" class="form-input" value="3" min="1" max="20">
+        <button class="btn btn-primary" onclick="window.genLorem()">📄 Yaratish</button>
+        <div id="loremResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('hash generator') || t.includes('#')) {
+    createModal('# Hash Generator', `
+      <div class="tool-form">
+        <textarea id="hashInput" class="form-textarea" rows="3" placeholder="Matn kiriting">KRYZEN HUB</textarea>
+        <button class="btn btn-primary" onclick="window.genHashes()"># Hash Yaratish</button>
+        <div id="hashResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('url shorten') || t.includes('shorten')) {
+    createModal('🔗 URL Shortener', `
+      <div class="tool-form">
+        <label>URL:</label>
+        <input type="url" id="shortUrl" class="form-input" placeholder="https://example.com/long-url">
+        <button class="btn btn-primary" onclick="window.shortenURL()">🔗 Qisqartirish</button>
+        <div id="shortResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  // CYBER TOOLS
+  else if (t.includes('ip lookup') || t.includes('ip')) {
+    createModal('🌐 IP Lookup', `
+      <div class="tool-form">
+        <label>IP manzil (ixtiyoriy):</label>
+        <input type="text" id="ipInput" class="form-input" placeholder="8.8.8.8 (bo'sh = sizning IP)">
+        <button class="btn btn-primary" onclick="window.lookupIP()">🌐 Tekshirish</button>
+        <div id="ipResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('dns')) {
+    createModal('📡 DNS Lookup', `
+      <div class="tool-form">
+        <label>Domain:</label>
+        <input type="text" id="dnsDomain" class="form-input" value="google.com" placeholder="example.com">
+        <label>Record turi:</label>
+        <select id="dnsType" class="form-select">
+          <option>A</option><option>AAAA</option><option>MX</option>
+          <option>NS</option><option>TXT</option><option>CNAME</option>
+        </select>
+        <button class="btn btn-primary" onclick="window.lookupDNS()">📡 Tekshirish</button>
+        <div id="dnsResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('whois')) {
+    createModal('🔍 WHOIS Lookup', `
+      <div class="tool-form">
+        <label>Domain:</label>
+        <input type="text" id="whoisDomain" class="form-input" value="google.com" placeholder="example.com">
+        <button class="btn btn-primary" onclick="window.lookupWhois()">🔍 Tekshirish</button>
+        <div id="whoisResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('http headers')) {
+    createModal('📋 HTTP Headers', `
+      <div class="tool-form">
+        <label>URL:</label>
+        <input type="text" id="hdrUrl" class="form-input" value="https://google.com" placeholder="https://example.com">
+        <button class="btn btn-primary" onclick="window.checkHeaders()">📋 Tekshirish</button>
+        <div id="hdrResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('ssl')) {
+    createModal('🔒 SSL Checker', `
+      <div class="tool-form">
+        <label>Domain:</label>
+        <input type="text" id="sslDomain" class="form-input" value="google.com" placeholder="example.com">
+        <button class="btn btn-primary" onclick="window.checkSSL()">🔒 Tekshirish</button>
+        <div id="sslResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('subdomain')) {
+    createModal('🌐 Subdomain Finder', `
+      <div class="tool-form">
+        <label>Domain:</label>
+        <input type="text" id="subDomain" class="form-input" value="google.com" placeholder="example.com">
+        <button class="btn btn-primary" onclick="window.findSubdomains()">🔍 Qidirish</button>
+        <div id="subResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('jwt')) {
+    createModal('JWT JWT Decoder', `
+      <div class="tool-form">
+        <textarea id="jwtInput" class="form-textarea" rows="4" placeholder="JWT token">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</textarea>
+        <button class="btn btn-primary" onclick="window.decodeJWT()">🔓 Decode</button>
+        <div id="jwtResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('email validator') || t.includes('email')) {
+    createModal('📧 Email Validator', `
+      <div class="tool-form">
+        <label>Email:</label>
+        <input type="email" id="emInput" class="form-input" placeholder="user@example.com">
+        <button class="btn btn-primary" onclick="window.validateEmail()">✓ Tekshirish</button>
+        <div id="emResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('phone')) {
+    createModal('📱 Phone Lookup', `
+      <div class="tool-form">
+        <label>Telefon raqam:</label>
+        <input type="text" id="phInput" class="form-input" placeholder="+998901234567">
+        <button class="btn btn-primary" onclick="window.lookupPhone()">📱 Tekshirish</button>
+        <div id="phResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('breach')) {
+    createModal('⚠️ Breach Checker', `
+      <div class="tool-form">
+        <label>Email:</label>
+        <input type="email" id="brInput" class="form-input" placeholder="user@example.com">
+        <button class="btn btn-primary" onclick="window.checkBreach()">⚠️ Tekshirish</button>
+        <div id="brResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  // GitHub Analyzer
+  else if (t.includes('github analyzer') || t.includes('github tahlil')) {
+    createModal('🐙 GitHub Analyzer', `
+      <div class="tool-form">
+        <label>GitHub username:</label>
+        <input type="text" id="ghUser" class="form-input" value="KRYZENSYS" placeholder="username">
+        <button class="btn btn-primary" onclick="window.analyzeGitHub()">🔍 Tahlil qilish</button>
+        <div id="ghResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  // Downloader
+  else if (t.includes('youtube') || t.includes('instagram') || t.includes('tiktok') || t.includes('twitter') || t.includes('download')) {
+    createModal('📥 Media Downloader', `
+      <div class="tool-form">
+        <label>Video URL (YouTube, Instagram, TikTok, Twitter, Facebook...):</label>
+        <input type="url" id="dlUrl" class="form-input" placeholder="https://youtube.com/watch?v=...">
+        <div class="form-row">
+          <label>Sifat:</label>
+          <select id="dlQuality" class="form-select">
+            <option value="best">Eng yaxshi</option>
+            <option value="1080p">1080p</option>
+            <option value="720p">720p</option>
+            <option value="480p">480p</option>
+            <option value="audio">Faqat audio (mp3)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="window.downloadMedia()">📥 Yuklab olish</button>
+        <div id="dlResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  // Holiday
+  else if (t.includes('holiday') || t.includes('bayram')) {
+    createModal('🎉 Bayramlar', `
+      <div class="tool-form">
+        <label>Davlat kodi (UZ, US, RU, GB...):</label>
+        <input type="text" id="holCountry" class="form-input" value="UZ">
+        <label>Yil:</label>
+        <input type="number" id="holYear" class="form-input" value="2026">
+        <button class="btn btn-primary" onclick="window.getHolidays()">🎉 Ko'rish</button>
+        <div id="holResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('sentiment') || t.includes('his-tuyg\'u')) {
+    createModal('😊 His-tuyg\'u Tahlili', `
+      <div class="tool-form">
+        <label>Matn:</label>
+        <textarea id="sentText" class="form-textarea" rows="4" placeholder="Matn kiriting...">I love this product! It is amazing and works perfectly.</textarea>
+        <button class="btn btn-primary" onclick="window.analyzeSentiment()">🔍 Tahlil</button>
+        <div id="sentResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  else if (t.includes('summarizer') || t.includes('qisqart')) {
+    createModal('📝 Matn Qisqartirish', `
+      <div class="tool-form">
+        <label>Asl matn:</label>
+        <textarea id="sumText" class="form-textarea" rows="8" placeholder="Uzun matn kiriting..."></textarea>
+        <button class="btn btn-primary" onclick="window.summarizeText()">📝 Qisqartirish</button>
+        <div id="sumResult" class="tool-result"></div>
+      </div>
+    `);
+  }
+  // DEFAULT
+  else {
+    createModal(`🔧 ${toolName}`, `
+      <div class="alert alert-info">
+        <strong>${toolName}</strong> tayyorlanmoqda...
+        <p style="margin-top:8px">Backend API yaratilgan: <code>${API_BASE}</code></p>
+        <p>Vercel'ga deploy qilish kerak. Yoki boshqa toollardan foydalaning.</p>
+      </div>
+      <div class="tool-form">
+        <button class="btn btn-primary" onclick="closeTool()">✓ Yopish</button>
+      </div>
+    `);
+  }
+};
 
-  // ============================================================
-  // TOOL CLICK HANDLER
-  // ============================================================
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('.card');
-    if (!card) return;
-    const title = card.querySelector('.card-title')?.textContent?.trim();
-    if (title && window.tools[title]) {
-      openTool(title);
+// ============================================================
+// AI CHAT FUNCTION
+// ============================================================
+window.sendAIMessage = async function() {
+  const input = document.getElementById('aiChatInput');
+  const messages = document.getElementById('aiChatMessages');
+  if (!input || !messages) return;
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Add user message
+  messages.innerHTML += `<div class="ai-message user">${text}</div>`;
+  input.value = '';
+  messages.scrollTop = messages.scrollHeight;
+
+  // Loading
+  messages.innerHTML += `<div class="ai-message bot loading" id="aiLoading"><div class="spinner"></div></div>`;
+  messages.scrollTop = messages.scrollHeight;
+
+  try {
+    const res = await fetch(API_BASE + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await res.json();
+
+    const loading = document.getElementById('aiLoading');
+    if (loading) loading.remove();
+
+    messages.innerHTML += `<div class="ai-message bot">${data.message || 'Xatolik yuz berdi'}</div>`;
+    messages.scrollTop = messages.scrollHeight;
+  } catch (e) {
+    const loading = document.getElementById('aiLoading');
+    if (loading) loading.remove();
+    // Local fallback
+    const reply = window.localAIResponse(text);
+    messages.innerHTML += `<div class="ai-message bot">${reply}</div>`;
+    messages.scrollTop = messages.scrollHeight;
+  }
+};
+
+window.localAIResponse = function(text) {
+  const t = text.toLowerCase();
+  if (t.includes('salom') || t.includes('hello')) return 'Salom! Sizga qanday yordam bera olaman?';
+  if (t.includes('kim') || t.includes('who')) return 'Men KRYZEN HUB AI yordamchisiman! 80+ vositam bor.';
+  if (t.includes('rahmat') || t.includes('thanks')) return 'Arzimaydi! 😊';
+  if (t.includes('kod') || t.includes('code')) return 'Kod yozishda yordam beraman! Qaysi tilda?';
+  if (t.includes('parol') || t.includes('password')) return 'Password Generator vositasidan foydalaning!';
+  if (t.includes('ob-havo') || t.includes('weather')) return 'Weather vositasi orqali ob-havoni bilib oling!';
+  return 'Qiziqarli savol! Aniqlashtirib bersangiz, yaxshiroq yordam bera olaman.';
+};
+
+// ============================================================
+// ALL TOOL FUNCTIONS
+// ============================================================
+window.translateText = async function() {
+  const text = document.getElementById('trText').value;
+  const from = document.getElementById('trFrom').value;
+  const to = document.getElementById('trTo').value;
+  const result = document.getElementById('trResult');
+  if (!result) return;
+  result.innerHTML = showLoading('Tarjima qilinmoqda...');
+
+  try {
+    const res = await fetch(API_BASE + '/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, from, to })
+    });
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `<div class="output-box">${data.translated}</div>`;
+    } else {
+      result.innerHTML = showError(data.error);
     }
-  });
+  } catch (e) {
+    result.innerHTML = showError('Tarjima xizmati vaqtincha ishlamayapti');
+  }
+};
 
-  // Close modal handlers
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal') || e.target.closest('.modal-close')) {
-      closeTool();
+window.getWeather = async function() {
+  const city = document.getElementById('weatherCity').value;
+  const result = document.getElementById('weatherResult');
+  result.innerHTML = showLoading('Yuklanmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/weather?city=' + encodeURIComponent(city));
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="weather-card">
+          <h3>${data.location.name}, ${data.location.country}</h3>
+          <div style="font-size:60px;text-align:center">${data.current.icon}</div>
+          <div class="weather-temp">${Math.round(data.current.temperature_2m)}°C</div>
+          <p>${data.current.description}</p>
+          <div class="weather-details">
+            <div>💧 Namlik: ${data.current.relative_humidity_2m}%</div>
+            <div>💨 Shamol: ${data.current.wind_speed_10m} km/s</div>
+            <div>🌡️ His: ${Math.round(data.current.apparent_temperature)}°C</div>
+          </div>
+        </div>
+      `;
+    } else {
+      result.innerHTML = showError(data.error || 'Shahar topilmadi');
     }
-  });
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeTool();
-  });
+window.getNews = async function() {
+  const category = document.getElementById('newsCategory').value;
+  const result = document.getElementById('newsResult');
+  result.innerHTML = showLoading('Yangiliklar yuklanmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/news?category=' + category);
+    const data = await res.json();
+    if (data.success && data.articles) {
+      result.innerHTML = data.articles.slice(0, 15).map(a => `
+        <div class="news-item">
+          <a href="${a.url}" target="_blank" class="news-title">${a.title}</a>
+          <div class="news-meta">⭐ ${a.score || 0} · 💬 ${a.comments || 0} · 🕐 ${a.time}</div>
+        </div>
+      `).join('');
+    } else {
+      result.innerHTML = showError('Yangiliklar topilmadi');
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
 
-})();
+window.getCrypto = async function() {
+  const result = document.getElementById('cryptoResult');
+  result.innerHTML = showLoading('Narxlar yuklanmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/crypto');
+    const data = await res.json();
+    if (data.success) {
+      let html = '<h3>💰 Kriptovalyuta narxlari (USD)</h3><div class="crypto-grid">';
+      for (const [id, info] of Object.entries(data.prices)) {
+        const change = info.usd_24h_change || 0;
+        const changeClass = change >= 0 ? 'positive' : 'negative';
+        const changeIcon = change >= 0 ? '📈' : '📉';
+        html += `
+          <div class="crypto-item">
+            <div class="crypto-name">${id.toUpperCase()}</div>
+            <div class="crypto-price">$${info.usd?.toFixed(2) || 'N/A'}</div>
+            <div class="crypto-change ${changeClass}">${changeIcon} ${change.toFixed(2)}%</div>
+          </div>
+        `;
+      }
+      html += '</div>';
+      result.innerHTML = html;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.getCurrency = async function() {
+  const base = document.getElementById('curBase').value || 'USD';
+  const result = document.getElementById('curResult');
+  result.innerHTML = showLoading('Kurslar yuklanmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/currency?base=' + base);
+    const data = await res.json();
+    if (data.success) {
+      const top = ['USD','EUR','RUB','UZS','GBP','JPY','CNY','KRW','TRY','KZT'];
+      let html = `<h3>💱 ${base} dan asosiy valyutalarga</h3><div class="currency-grid">`;
+      top.forEach(code => {
+        if (data.rates[code]) {
+          html += `<div class="currency-item"><strong>${code}</strong>: ${data.rates[code].toFixed(2)}</div>`;
+        }
+      });
+      html += '</div>';
+      result.innerHTML = html;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.getDict = async function() {
+  const word = document.getElementById('dictWord').value;
+  const result = document.getElementById('dictResult');
+  if (!word) return;
+  result.innerHTML = showLoading('Qidirilmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/dictionary?word=' + encodeURIComponent(word));
+    const data = await res.json();
+    if (data.success) {
+      let html = `<h3>${data.word} ${data.phonetic || ''}</h3>`;
+      data.meanings.forEach(m => {
+        html += `<div class="dict-meaning"><strong>${m.partOfSpeech}</strong><ul>`;
+        m.definitions.forEach(d => {
+          html += `<li>${d.definition}${d.example ? `<br><em>"${d.example}"</em>` : ''}</li>`;
+        });
+        html += '</ul></div>';
+      });
+      result.innerHTML = html;
+    } else {
+      result.innerHTML = showError('So\'z topilmadi');
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.getQuote = async function() {
+  const result = document.getElementById('quoteResult');
+  try {
+    const res = await fetch(API_BASE + '/quote?type=quote');
+    const data = await res.json();
+    result.innerHTML = `
+      <div class="quote-card">
+        <div class="quote-text">"${data.text}"</div>
+        <div class="quote-author">— ${data.author}</div>
+      </div>
+    `;
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.getJoke = async function() {
+  const result = document.getElementById('jokeResult');
+  try {
+    const res = await fetch(API_BASE + '/quote?type=joke');
+    const data = await res.json();
+    result.innerHTML = `<div class="joke-card">${data.text}</div>`;
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.formatJSON = function() {
+  const input = document.getElementById('jsonInput').value;
+  const result = document.getElementById('jsonResult');
+  try {
+    const obj = JSON.parse(input);
+    result.innerHTML = `<pre class="code-block">${JSON.stringify(obj, null, 2)}</pre>
+      <button class="btn-mini" onclick="copyToClipboard(document.querySelector('#jsonResult pre').textContent)">📋 Nusxalash</button>`;
+  } catch (e) {
+    result.innerHTML = showError('Noto\'g\'ri JSON: ' + e.message);
+  }
+};
+
+window.minifyJSON = function() {
+  const input = document.getElementById('jsonInput').value;
+  const result = document.getElementById('jsonResult');
+  try {
+    const obj = JSON.parse(input);
+    result.innerHTML = `<pre class="code-block">${JSON.stringify(obj)}</pre>
+      <button class="btn-mini" onclick="copyToClipboard(document.querySelector('#jsonResult pre').textContent)">📋 Nusxalash</button>`;
+  } catch (e) {
+    result.innerHTML = showError('Noto\'g\'ri JSON');
+  }
+};
+
+window.validateJSON = function() {
+  const input = document.getElementById('jsonInput').value;
+  const result = document.getElementById('jsonResult');
+  try {
+    JSON.parse(input);
+    result.innerHTML = '<div class="alert alert-success">✅ To\'g\'ri JSON!</div>';
+  } catch (e) {
+    result.innerHTML = `<div class="alert alert-error">❌ Xato: ${e.message}</div>`;
+  }
+};
+
+window.validateJSON2 = window.validateJSON;
+
+window.b64encode = function() {
+  const input = document.getElementById('b64eInput').value;
+  const result = document.getElementById('b64eResult');
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(input)));
+    result.innerHTML = `<div class="output-box">${encoded}</div>
+      <button class="btn-mini" onclick="copyToClipboard('${encoded}')">📋</button>`;
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.b64decode = function() {
+  const input = document.getElementById('b64dInput').value;
+  const result = document.getElementById('b64dResult');
+  try {
+    const decoded = decodeURIComponent(escape(atob(input)));
+    result.innerHTML = `<div class="output-box">${decoded}</div>
+      <button class="btn-mini" onclick="copyToClipboard(\`${decoded}\`)">📋</button>`;
+  } catch (e) {
+    result.innerHTML = showError('Noto\'g\'ri Base64');
+  }
+};
+
+window.urlEncode = function() {
+  const input = document.getElementById('urleInput').value;
+  const result = document.getElementById('urleResult');
+  const encoded = encodeURIComponent(input);
+  result.innerHTML = `<div class="output-box">${encoded}</div>
+    <button class="btn-mini" onclick="copyToClipboard('${encoded}')">📋</button>`;
+};
+
+window.urlDecode = function() {
+  const input = document.getElementById('urldInput').value;
+  const result = document.getElementById('urldResult');
+  try {
+    const decoded = decodeURIComponent(input);
+    result.innerHTML = `<div class="output-box">${decoded}</div>
+      <button class="btn-mini" onclick="copyToClipboard(\`${decoded}\`)">📋</button>`;
+  } catch (e) {
+    result.innerHTML = showError('Noto\'g\'ri URL encoded');
+  }
+};
+
+window.testRegex = function() {
+  const pattern = document.getElementById('regexPattern').value;
+  const flags = document.getElementById('regexFlags').value;
+  const text = document.getElementById('regexText').value;
+  const result = document.getElementById('regexResult');
+  try {
+    const regex = new RegExp(pattern, flags);
+    const matches = [...text.matchAll(new RegExp(pattern, flags + (flags.includes('g') ? '' : 'g')))];
+    const highlighted = text.replace(regex, m => `<mark>${m}</mark>`);
+    result.innerHTML = `
+      <div class="regex-result">
+        <div>✅ ${matches.length} ta moslik topildi</div>
+        <div class="regex-text">${highlighted}</div>
+        ${matches.length > 0 ? '<h4>Topilgan:</h4><ul>' + matches.slice(0, 20).map(m => `<li>${m[0]}</li>`).join('') + '</ul>' : ''}
+      </div>
+    `;
+  } catch (e) {
+    result.innerHTML = showError('Noto\'g\'ri regex: ' + e.message);
+  }
+};
+
+window.genUUIDs = async function() {
+  const count = document.getElementById('uuidCount').value;
+  const result = document.getElementById('uuidResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(API_BASE + '/uuid?count=' + count);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = data.uuids.map(u => `<div class="uuid-item"><code>${u}</code> <button class="btn-mini" onclick="copyToClipboard('${u}')">📋</button></div>`).join('');
+    }
+  } catch (e) {
+    // Fallback to client-side
+    const uuids = [];
+    for (let i = 0; i < count; i++) uuids.push(crypto.randomUUID());
+    result.innerHTML = uuids.map(u => `<div class="uuid-item"><code>${u}</code> <button class="btn-mini" onclick="copyToClipboard('${u}')">📋</button></div>`).join('');
+  }
+};
+
+window.genPasswords = async function() {
+  const length = document.getElementById('pwLen').value;
+  const count = document.getElementById('pwCount').value;
+  const u = document.getElementById('pwUp').checked;
+  const l = document.getElementById('pwLo').checked;
+  const n = document.getElementById('pwNum').checked;
+  const s = document.getElementById('pwSym').checked;
+  const result = document.getElementById('pwResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/password?length=${length}&count=${count}&uppercase=${u}&lowercase=${l}&numbers=${n}&symbols=${s}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = data.passwords.map(p =>
+        `<div class="password-item">
+          <code>${p.value}</code>
+          <span class="strength strength-${p.strength.label}">${p.strength.label}</span>
+          <button class="btn-mini" onclick="copyToClipboard('${p.value}')">📋</button>
+        </div>`
+      ).join('');
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.genQR = async function() {
+  const data = document.getElementById('qrData').value;
+  const size = document.getElementById('qrSize').value;
+  const result = document.getElementById('qrResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/qrcode?data=${encodeURIComponent(data)}&size=${size}`);
+    const json = await res.json();
+    result.innerHTML = `<img src="${json.url}" alt="QR Code" style="max-width:100%;border-radius:12px">
+      <p style="margin-top:10px"><a href="${json.url}" target="_blank" class="btn btn-primary">⬇ Yuklab olish</a></p>`;
+  } catch (e) {
+    // Fallback
+    const url = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(data)}`;
+    result.innerHTML = `<img src="${url}" alt="QR Code" style="max-width:100%">`;
+  }
+};
+
+window.genLorem = async function() {
+  const paragraphs = document.getElementById('loremP').value;
+  const result = document.getElementById('loremResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/lorem?paragraphs=${paragraphs}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `<div class="output-box">${data.text}</div>
+        <button class="btn-mini" onclick="copyToClipboard(\`${data.text}\`)">📋 Nusxalash</button>`;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.genHashes = async function() {
+  const text = document.getElementById('hashInput').value;
+  const result = document.getElementById('hashResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(API_BASE + '/hash', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (data.success) {
+      let html = '';
+      for (const [algo, hash] of Object.entries(data.hashes)) {
+        html += `<div class="hash-item"><strong>${algo}:</strong><br><code>${hash}</code> <button class="btn-mini" onclick="copyToClipboard('${hash}')">📋</button></div>`;
+      }
+      result.innerHTML = html;
+    }
+  } catch (e) {
+    // Client-side fallback using Web Crypto
+    const enc = new TextEncoder();
+    const buf = await crypto.subtle.digest('SHA-256', enc.encode(text));
+    const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    result.innerHTML = `<div class="hash-item"><strong>SHA-256:</strong><br><code>${hash}</code> <button class="btn-mini" onclick="copyToClipboard('${hash}')">📋</button></div>`;
+  }
+};
+
+window.shortenURL = async function() {
+  const url = document.getElementById('shortUrl').value;
+  const result = document.getElementById('shortResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(API_BASE + '/shorten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `<div class="output-box">🔗 ${data.short}</div>
+        <button class="btn-mini" onclick="copyToClipboard('${data.short}')">📋 Nusxalash</button>`;
+    } else {
+      result.innerHTML = showError(data.error);
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.lookupIP = async function() {
+  const ip = document.getElementById('ipInput').value;
+  const result = document.getElementById('ipResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/ip${ip ? '?ip=' + ip : ''}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="info-grid">
+          <div><strong>IP:</strong> ${data.ip || 'N/A'}</div>
+          <div><strong>Davlat:</strong> ${data.country || 'N/A'} ${data.countryCode || ''}</div>
+          <div><strong>Shahar:</strong> ${data.city || 'N/A'}</div>
+          <div><strong>Mintaqa:</strong> ${data.region || 'N/A'}</div>
+          <div><strong>ISP:</strong> ${data.isp || data.org || 'N/A'}</div>
+          <div><strong>Timezone:</strong> ${data.timezone || 'N/A'}</div>
+          <div><strong>Lat/Lon:</strong> ${data.lat || 'N/A'}, ${data.lon || 'N/A'}</div>
+          <div><strong>ZIP:</strong> ${data.zip || 'N/A'}</div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.lookupDNS = async function() {
+  const domain = document.getElementById('dnsDomain').value;
+  const type = document.getElementById('dnsType').value;
+  const result = document.getElementById('dnsResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/dns?domain=${domain}&type=${type}`);
+    const data = await res.json();
+    if (data.success) {
+      let html = `<h3>${domain} - ${type} yozuvlari</h3>`;
+      if (data.answer && data.answer.length > 0) {
+        html += '<div class="dns-records">';
+        data.answer.forEach(a => {
+          html += `<div class="dns-record">${a.data}</div>`;
+        });
+        html += '</div>';
+      } else {
+        html += '<p>Yozuvlar topilmadi</p>';
+      }
+      result.innerHTML = html;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.lookupWhois = async function() {
+  const domain = document.getElementById('whoisDomain').value;
+  const result = document.getElementById('whoisResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/whois?domain=${domain}`);
+    const data = await res.json();
+    if (data.success && data.registrar) {
+      result.innerHTML = `
+        <div class="info-grid">
+          <div><strong>Domain:</strong> ${data.domain}</div>
+          <div><strong>Registrar:</strong> ${data.registrar || 'N/A'}</div>
+          <div><strong>Yaratilgan:</strong> ${data.creationDate || 'N/A'}</div>
+          <div><strong>Tugaydi:</strong> ${data.expirationDate || 'N/A'}</div>
+          <div><strong>Yangilangan:</strong> ${data.lastUpdated || 'N/A'}</div>
+          <div><strong>Nameservers:</strong><br>${(data.nameservers || []).map(n => `<code>${n}</code>`).join('<br>')}</div>
+        </div>
+      `;
+    } else {
+      result.innerHTML = `<div class="alert alert-warn">${data.registrar ? '' : 'RDAP ma\'lumotlari mavjud emas'}</div>`;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.checkHeaders = async function() {
+  const url = document.getElementById('hdrUrl').value;
+  const result = document.getElementById('hdrResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/headers?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="security-grade grade-${data.grade}">Xavfsizlik darajasi: ${data.grade}</div>
+        <h4>📋 Headers</h4>
+        <div class="headers-list">
+          ${Object.entries(data.headers).map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('')}
+        </div>
+        <h4>🛡 Xavfsizlik</h4>
+        <div class="security-checks">
+          <div>${data.security.hsts ? '✅' : '❌'} HSTS</div>
+          <div>${data.security.csp ? '✅' : '❌'} CSP</div>
+          <div>${data.security.xframe ? '✅' : '❌'} X-Frame-Options</div>
+          <div>${data.security.xss ? '✅' : '❌'} XSS Protection</div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.checkSSL = async function() {
+  const domain = document.getElementById('sslDomain').value;
+  const result = document.getElementById('sslResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/ssl?domain=${domain}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="ssl-status">${data.status}</div>
+        <div class="info-grid">
+          <div><strong>Domain:</strong> ${data.domain}</div>
+          <div><strong>HTTPS:</strong> ${data.https ? '✅' : '❌'}</div>
+          <div><strong>HSTS:</strong> ${data.hsts ? '✅' : '❌'}</div>
+          <div><strong>CSP:</strong> ${data.csp ? '✅' : '❌'}</div>
+          <div><strong>Daraja:</strong> ${data.grade}</div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.findSubdomains = async function() {
+  const domain = document.getElementById('subDomain').value;
+  const result = document.getElementById('subResult');
+  result.innerHTML = showLoading('Skanerlanmoqda...');
+  try {
+    const res = await fetch(`${API_BASE}/subdomain?domain=${domain}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `<p>${data.foundCount} ta subdomain topildi (${data.totalScanned} tadan)</p>`;
+      if (data.found.length > 0) {
+        result.innerHTML += data.found.map(s => `<div class="sub-item"><code>${s.subdomain}</code> → ${s.ip} <button class="btn-mini" onclick="copyToClipboard('${s.subdomain}')">📋</button></div>`).join('');
+      }
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.decodeJWT = async function() {
+  const token = document.getElementById('jwtInput').value;
+  const result = document.getElementById('jwtResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(API_BASE + '/jwt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <h4>Header</h4>
+        <pre class="code-block">${JSON.stringify(data.header, null, 2)}</pre>
+        <h4>Payload</h4>
+        <pre class="code-block">${JSON.stringify(data.payload, null, 2)}</pre>
+        <div class="jwt-status ${data.valid ? 'valid' : 'expired'}">
+          ${data.valid ? '✅ Token yaroqli' : '❌ Token muddati tugagan'}
+        </div>
+      `;
+    } else {
+      result.innerHTML = showError(data.error);
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.validateEmail = async function() {
+  const email = document.getElementById('emInput').value;
+  const result = document.getElementById('emResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/email?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="email-validity ${data.valid ? 'valid' : 'invalid'}">
+          ${data.valid ? '✅ Yaroqli email' : '❌ Yaroqsiz email'}
+        </div>
+        <div class="info-grid">
+          <div><strong>User:</strong> ${data.user}</div>
+          <div><strong>Domain:</strong> ${data.domain}</div>
+          <div><strong>MX Records:</strong> ${data.mxRecords?.length || 0}</div>
+          <div><strong>Disposable:</strong> ${data.disposable ? '⚠️ Ha' : '✅ Yo\'q'}</div>
+          <div><strong>Role email:</strong> ${data.role ? '⚠️ Ha' : '✅ Yo\'q'}</div>
+          <div><strong>Score:</strong> ${data.score}/100</div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.lookupPhone = async function() {
+  const phone = document.getElementById('phInput').value;
+  const result = document.getElementById('phResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/phone?phone=${encodeURIComponent(phone)}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="phone-validity ${data.valid ? 'valid' : 'invalid'}">
+          ${data.valid ? '✅ Yaroqli' : '❌ Yaroqsiz'} ${data.formatted}
+        </div>
+        ${data.country ? `
+          <div class="info-grid">
+            <div><strong>Davlat:</strong> ${data.country.flag} ${data.country.name}</div>
+            ${data.operator ? `<div><strong>Operator:</strong> ${data.operator}</div>` : ''}
+          </div>
+        ` : ''}
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.checkBreach = async function() {
+  const email = document.getElementById('brInput').value;
+  const result = document.getElementById('brResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/breach?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    if (data.success) {
+      let html = `<div class="breach-status ${data.safe ? 'safe' : 'danger'}">${data.message}</div>`;
+      if (data.breaches.length > 0) {
+        html += '<h4>Topilgan sizib chiqishlar:</h4>';
+        data.breaches.forEach(b => {
+          html += `<div class="breach-item">
+            <strong>${b.name}</strong> (${b.domain})<br>
+            <small>Sana: ${b.breachDate} · ${b.pwnCount?.toLocaleString() || 0} hisobot</small>
+          </div>`;
+        });
+      }
+      result.innerHTML = html;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.analyzeGitHub = async function() {
+  const username = document.getElementById('ghUser').value;
+  const result = document.getElementById('ghResult');
+  result.innerHTML = showLoading('GitHub ma\'lumotlari yuklanmoqda...');
+  try {
+    const res = await fetch(`${API_BASE}/github?username=${username}`);
+    const data = await res.json();
+    if (data.success) {
+      const u = data.user;
+      result.innerHTML = `
+        <div class="gh-profile">
+          <img src="${u.avatar}" alt="${u.login}" class="gh-avatar">
+          <div>
+            <h3>${u.name || u.login}</h3>
+            <p>@${u.login}</p>
+            ${u.bio ? `<p>${u.bio}</p>` : ''}
+            ${u.location ? `<p>📍 ${u.location}</p>` : ''}
+            ${u.company ? `<p>🏢 ${u.company}</p>` : ''}
+          </div>
+        </div>
+        <div class="gh-stats">
+          <div class="gh-stat"><div class="num">${u.publicRepos}</div><div>Repos</div></div>
+          <div class="gh-stat"><div class="num">${u.followers}</div><div>Followers</div></div>
+          <div class="gh-stat"><div class="num">${u.following}</div><div>Following</div></div>
+          <div class="gh-stat"><div class="num">${data.stats.totalStars}</div><div>Stars</div></div>
+          <div class="gh-stat"><div class="num">${u.publicGists}</div><div>Gists</div></div>
+        </div>
+        ${data.stats.topLanguages.length > 0 ? `
+          <h4>📊 Top tillar</h4>
+          <div class="lang-list">
+            ${data.stats.topLanguages.map(l => `<div><span>${l[0]}</span><strong>${l[1]}</strong></div>`).join('')}
+          </div>
+        ` : ''}
+        ${data.topRepos.length > 0 ? `
+          <h4>⭐ Top repos</h4>
+          ${data.topRepos.map(r => `
+            <div class="gh-repo">
+              <a href="${r.url}" target="_blank">${r.name}</a>
+              <p>${r.description || ''}</p>
+              <small>⭐ ${r.stars} · 🍴 ${r.forks} · ${r.language || ''}</small>
+            </div>
+          `).join('')}
+        ` : ''}
+      `;
+    } else {
+      result.innerHTML = showError(data.error || 'Foydalanuvchi topilmadi');
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.downloadMedia = async function() {
+  const url = document.getElementById('dlUrl').value;
+  const quality = document.getElementById('dlQuality').value;
+  const result = document.getElementById('dlResult');
+  if (!url) {
+    result.innerHTML = showError('URL kiriting');
+    return;
+  }
+  result.innerHTML = showLoading('Video ma\'lumotlari olinmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, quality })
+    });
+    const data = await res.json();
+    if (data.success) {
+      let html = `<div class="dl-info">✅ Platform: <strong>${data.platform}</strong></div>`;
+      if (data.videoId) html += `<div class="dl-info">📺 Video ID: ${data.videoId}</div>`;
+      html += '<h4>Yuklab olish variantlari:</h4>';
+      data.downloadOptions.forEach(opt => {
+        html += `<a href="${opt.url}" target="_blank" class="btn btn-primary dl-btn">
+          ${opt.service} - ${opt.quality} ${opt.format ? '(' + opt.format + ')' : ''}
+        </a>`;
+      });
+      html += `<p style="margin-top:12px;color:var(--text-3);font-size:13px">${data.message}</p>`;
+      result.innerHTML = html;
+    } else {
+      result.innerHTML = showError(data.error);
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.generateCode = async function() {
+  const lang = document.getElementById('codeLang').value;
+  const prompt = document.getElementById('codePrompt').value;
+  const result = document.getElementById('codeResult');
+  if (!prompt) {
+    result.innerHTML = showError('Vazifani kiriting');
+    return;
+  }
+  result.innerHTML = showLoading('Kod yaratilmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `${lang} tilida kod yoz: ${prompt}. Faqat kod qaytar, izohsiz.` })
+    });
+    const data = await res.json();
+    const code = data.message.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
+    result.innerHTML = `<pre class="code-block">${code}</pre>
+      <button class="btn-mini" onclick="copyToClipboard(\`${code.replace(/`/g, '\\`')}\`)">📋 Nusxalash</button>`;
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.getHolidays = async function() {
+  const country = document.getElementById('holCountry').value;
+  const year = document.getElementById('holYear').value;
+  const result = document.getElementById('holResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(`${API_BASE}/holidays?country=${country}&year=${year}`);
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = data.holidays.map(h => `
+        <div class="holiday-item">
+          <div class="holiday-date">${h.date}</div>
+          <div class="holiday-name"><strong>${h.name}</strong></div>
+          ${h.localName && h.localName !== h.name ? `<div class="holiday-local">${h.localName}</div>` : ''}
+          <div class="holiday-type">${h.types?.join(', ') || 'Public'}</div>
+        </div>
+      `).join('');
+    } else {
+      result.innerHTML = showError('Bayramlar topilmadi');
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik: ' + e.message);
+  }
+};
+
+window.analyzeSentiment = async function() {
+  const text = document.getElementById('sentText').value;
+  const result = document.getElementById('sentResult');
+  result.innerHTML = showLoading();
+  try {
+    const res = await fetch(API_BASE + '/sentiment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="sentiment-card sentiment-${data.label}">
+          <div style="font-size:60px;text-align:center">${data.emoji}</div>
+          <div class="sentiment-label">${data.label.toUpperCase()}</div>
+          <div class="sentiment-score">Score: ${data.score.toFixed(2)}</div>
+          <div class="sentiment-breakdown">
+            <div>😊 Ijobiy: ${data.positive}</div>
+            <div>😢 Salbiy: ${data.negative}</div>
+          </div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+window.summarizeText = async function() {
+  const text = document.getElementById('sumText').value;
+  const result = document.getElementById('sumResult');
+  if (!text) {
+    result.innerHTML = showError('Matn kiriting');
+    return;
+  }
+  result.innerHTML = showLoading('Qisqartirilmoqda...');
+  try {
+    const res = await fetch(API_BASE + '/summarize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, ratio: 0.3 })
+    });
+    const data = await res.json();
+    if (data.success) {
+      result.innerHTML = `
+        <div class="summary-stats">
+          <span>📝 ${data.original.words} so'z</span>
+          <span>📄 ${data.original.sentences} gap</span>
+          <span>📉 ${data.compression} siqildi</span>
+        </div>
+        <h4>📋 Qisqacha mazmun:</h4>
+        <div class="output-box">${data.summary}</div>
+        ${data.topWords.length > 0 ? `
+          <h4>🔑 Asosiy so'zlar:</h4>
+          <div>${data.topWords.map(w => `<span class="keyword">${w.word} (${w.count})</span>`).join(' ')}</div>
+        ` : ''}
+      `;
+    }
+  } catch (e) {
+    result.innerHTML = showError('Xatolik');
+  }
+};
+
+console.log('✅ Tools.js loaded - 30+ API endpoints connected!');
