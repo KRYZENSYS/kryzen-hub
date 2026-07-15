@@ -29,20 +29,18 @@
   };
 
   /* ============================================================
-     2. LOADER
+     2. LOADER - INSTANT (no delay)
      ============================================================ */
   const initLoader = () => {
     const loader = $('#loader');
+    if (!loader) return;
+    // Darhol 100% ga yetkazib, 200ms ichida yashirish
     const bar = $('#loaderBar');
     const percent = $('#loaderPercent');
-    if (!loader) return;
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress >= 100) { progress = 100; clearInterval(interval); setTimeout(() => loader.classList.add('hidden'), 200); }
-      if (bar) bar.style.width = progress + '%';
-      if (percent) percent.textContent = Math.floor(progress) + '%';
-    }, 100);
+    if (bar) bar.style.width = '100%';
+    if (percent) percent.textContent = '100%';
+    setTimeout(() => loader.classList.add('hidden'), 250);
+    setTimeout(() => loader.remove(), 800);
   };
 
   /* ============================================================
@@ -241,18 +239,18 @@
       localStorage.setItem('kh-accent', c);
       $$('.color-dot').forEach(x => x.classList.remove('active'));
       d.classList.add('active');
-      showToast('Accent color o\\'zgartirildi');
+      showToast('Accent color o\'zgartirildi');
     }));
     let perf = false;
     on($('#perfModeBtn'), 'click', () => {
       perf = !perf; document.body.classList.toggle('perf-mode', perf);
-      $('#perfModeBtn').textContent = perf ? 'O\\'chirish' : 'Yoqish';
-      showToast(perf ? 'Performance mode yoqildi' : 'Performance mode o\\'chirildi');
+      $('#perfModeBtn').textContent = perf ? 'O\'chirish' : 'Yoqish';
+      showToast(perf ? 'Performance mode yoqildi' : 'Performance mode o\'chirildi');
     });
     let a11y = false;
     on($('#a11yModeBtn'), 'click', () => {
       a11y = !a11y; document.body.classList.toggle('a11y-mode', a11y);
-      $('#a11yModeBtn').textContent = a11y ? 'O\\'chirish' : 'Yoqish';
+      $('#a11yModeBtn').textContent = a11y ? 'O\'chirish' : 'Yoqish';
     });
   };
 
@@ -288,22 +286,22 @@
     { icon: 'CSS', name: 'CSS Generator', desc: 'CSS kod generator', tag: 'css', cat: 'generator' },
     { icon: '</>', name: 'HTML Beautifier', desc: 'HTML chiroyli qilish', tag: 'format', cat: 'format' },
     { icon: 'JS', name: 'JS Minifier', desc: 'JS kichraytirish', tag: 'minify', cat: 'format' },
-    { icon: 'MD', name: 'Markdown Preview', desc: 'MD ko\\'rish', tag: 'preview', cat: 'format' },
+    { icon: 'MD', name: 'Markdown Preview', desc: 'MD ko\'rish', tag: 'preview', cat: 'format' },
     { icon: '⏰', name: 'Timestamp Converter', desc: 'Vaqt konvertatsiya', tag: 'time', cat: 'converter' },
     { icon: '📄', name: 'Lorem Ipsum', desc: 'Matn generator', tag: 'generator', cat: 'generator' },
-    { icon: '🎲', name: 'Random Data', desc: 'Tasodifiy ma\\'lumot', tag: 'generator', cat: 'generator' },
+    { icon: '🎲', name: 'Random Data', desc: 'Tasodifiy ma\'lumot', tag: 'generator', cat: 'generator' },
   ];
   const cyberTools = [
-    { icon: '🌐', name: 'IP Lookup', desc: 'IP manzil ma\\'lumotlari', tag: 'network' },
-    { icon: '📡', name: 'DNS Lookup', desc: 'DNS yozuvlarini ko\\'rish', tag: 'network' },
-    { icon: '🔍', name: 'WHOIS Lookup', desc: 'Domen egasi ma\\'lumotlari', tag: 'domain' },
+    { icon: '🌐', name: 'IP Lookup', desc: 'IP manzil ma\'lumotlari', tag: 'network' },
+    { icon: '📡', name: 'DNS Lookup', desc: 'DNS yozuvlarini ko\'rish', tag: 'network' },
+    { icon: '🔍', name: 'WHOIS Lookup', desc: 'Domen egasi ma\'lumotlari', tag: 'domain' },
     { icon: '📋', name: 'HTTP Headers', desc: 'HTTP sarlavhalar tahlili', tag: 'http' },
     { icon: '🔒', name: 'SSL Checker', desc: 'SSL sertifikat tekshirish', tag: 'ssl' },
     { icon: '🚪', name: 'Port Scanner', desc: 'Ochiq portlarni topish', tag: 'scan' },
     { icon: '#', name: 'Hash Generator', desc: 'MD5, SHA1, SHA256', tag: 'hash' },
     { icon: '✓', name: 'Hash Checker', desc: 'Hashni tekshirish', tag: 'hash' },
     { icon: 'JWT', name: 'JWT Decoder', desc: 'JWT token tahlili', tag: 'auth' },
-    { icon: '🖥️', name: 'User-Agent', desc: 'Brauzer ma\\'lumotlari', tag: 'browser' },
+    { icon: '🖥️', name: 'User-Agent', desc: 'Brauzer ma\'lumotlari', tag: 'browser' },
     { icon: '🔑', name: 'Password Strength', desc: 'Parol kuchliligi', tag: 'security' },
     { icon: '🌐', name: 'Subdomain Finder', desc: 'Subdomainlarni topish', tag: 'domain' },
     { icon: '📊', name: 'HTTP Status', desc: 'Status kod tekshirish', tag: 'http' },
@@ -311,14 +309,14 @@
     { icon: '💡', name: 'Security Tips', desc: 'Xavfsizlik maslahatlari', tag: 'tips' },
   ];
   const osintTools = [
-    { icon: '👤', name: 'Username Search', desc: 'Username bo\\'yicha qidirish', tag: 'username' },
+    { icon: '👤', name: 'Username Search', desc: 'Username bo\'yicha qidirish', tag: 'username' },
     { icon: '📧', name: 'Email Lookup', desc: 'Email manzil tekshirish', tag: 'email' },
     { icon: '📱', name: 'Phone Lookup', desc: 'Telefon raqam tekshirish', tag: 'phone' },
-    { icon: '🌐', name: 'Domain Lookup', desc: 'Domen ma\\'lumotlari', tag: 'domain' },
-    { icon: '🖼️', name: 'Metadata Viewer', desc: 'Fayl metadata ko\\'rish', tag: 'meta' },
-    { icon: '📷', name: 'EXIF Viewer', desc: 'Rasm EXIF ma\\'lumotlari', tag: 'exif' },
+    { icon: '🌐', name: 'Domain Lookup', desc: 'Domen ma\'lumotlari', tag: 'domain' },
+    { icon: '🖼️', name: 'Metadata Viewer', desc: 'Fayl metadata ko\'rish', tag: 'meta' },
+    { icon: '📷', name: 'EXIF Viewer', desc: 'Rasm EXIF ma\'lumotlari', tag: 'exif' },
     { icon: '📱', name: 'Social Finder', desc: 'Ijtimoiy tarmoqlarda topish', tag: 'social' },
-    { icon: '📰', name: 'Public Info', desc: 'Ochiq ma\\'lumotlar', tag: 'public' },
+    { icon: '📰', name: 'Public Info', desc: 'Ochiq ma\'lumotlar', tag: 'public' },
     { icon: '⚠️', name: 'Breach Checker', desc: 'Sizib chiqish tekshirish', tag: 'breach' },
   ];
   const downloaderTools = [
@@ -346,7 +344,7 @@
   ];
   const filesTools = [
     { icon: '📄', name: 'PDF Merge', desc: 'PDFlarni birlashtirish', tag: 'pdf' },
-    { icon: '✂️', name: 'PDF Split', desc: 'PDFni bo\\'lish', tag: 'pdf' },
+    { icon: '✂️', name: 'PDF Split', desc: 'PDFni bo\'lish', tag: 'pdf' },
     { icon: '👁️', name: 'OCR', desc: 'Rasmdan matn olish', tag: 'ocr' },
     { icon: '🗜️', name: 'ZIP Creator', desc: 'ZIP arxiv yaratish', tag: 'archive' },
     { icon: '📦', name: 'Image Compressor', desc: 'Rasm siqish', tag: 'image' },
@@ -358,9 +356,9 @@
     { title: '00o.uz', icon: '🚀', desc: 'AI Startup Hub. Next.js, FastAPI, AI, 3 tilda.', tags: ['Next.js','FastAPI','AI'], cat: 'web', url: 'https://github.com/KRYZENSYS/00o-uz' },
     { title: 'KRYZENVERSE', icon: '🌌', desc: 'Mega-ekosistema. 14+ modul.', tags: ['Next.js','TS','AI'], cat: 'web', url: 'https://github.com/KRYZENSYS/kryzenverse' },
     { title: 'Anonymous Match', icon: '💘', desc: 'Telegram dating platform. Next.js 15, FastAPI, PostgreSQL.', tags: ['Next.js','Python','WS'], cat: 'web', url: 'https://github.com/KRYZENSYS/anonymous-match' },
-    { title: 'Firdavs Play', icon: '🎮', desc: '13 o\\'yinli Telegram gaming platform.', tags: ['Python','FastAPI','Game'], cat: 'web', url: 'https://github.com/KRYZENSYS/firdavs-play' },
-    { title: 'CyberUz Academy', icon: '🛡️', desc: 'Bepul kiberxavfsizlik o\\'rganish platformasi.', tags: ['TypeScript','EdTech'], cat: 'cyber', url: 'https://github.com/KRYZENSYS/cyberuz-academy' },
-    { title: 'EduVerse', icon: '🎓', desc: 'Ta\\'lim platformasi.', tags: ['TypeScript','Next.js'], cat: 'web', url: 'https://github.com/KRYZENSYS/EduVerse' },
+    { title: 'Firdavs Play', icon: '🎮', desc: '13 o\'yinli Telegram gaming platform.', tags: ['Python','FastAPI','Game'], cat: 'web', url: 'https://github.com/KRYZENSYS/firdavs-play' },
+    { title: 'CyberUz Academy', icon: '🛡️', desc: 'Bepul kiberxavfsizlik o\'rganish platformasi.', tags: ['TypeScript','EdTech'], cat: 'cyber', url: 'https://github.com/KRYZENSYS/cyberuz-academy' },
+    { title: 'EduVerse', icon: '🎓', desc: 'Ta\'lim platformasi.', tags: ['TypeScript','Next.js'], cat: 'web', url: 'https://github.com/KRYZENSYS/EduVerse' },
     { title: 'VIP Portfolio', icon: '💎', desc: 'Cyberpunk portfolio. Next.js 15, Framer Motion, Three.js.', tags: ['Next.js','Motion','3D'], cat: 'web', url: 'https://github.com/KRYZENSYS/firdavs-vip-portfolio' },
     { title: 'AI Assistant', icon: '🤖', desc: 'Android AI assistant (Kotlin).', tags: ['Kotlin','Android','AI'], cat: 'ai', url: 'https://github.com/KRYZENSYS/Ai-Assistent-' },
     { title: 'Car Scanner', icon: '🚗', desc: 'Android car scanning app (Kotlin).', tags: ['Kotlin','Android','AI'], cat: 'mobile', url: 'https://github.com/KRYZENSYS/Car-scanning-' },
@@ -492,7 +490,7 @@
       const chart = $('#aiChart');
       if (chart) for (let i = 0; i < 12; i++) { const b = create('div'); b.style.height = (Math.random() * 100) + '%'; chart.appendChild(b); }
       const notif = $('#notifList');
-      if (notif) ['🚀 Yangi modul qo\\'shildi','💬 5 ta yangi xabar','🔔 Tizim yangilandi','⭐ 10 ta yangi yulduz'].forEach(t => notif.appendChild(create('li', {}, t)));
+      if (notif) ['🚀 Yangi modul qo\'shildi','💬 5 ta yangi xabar','🔔 Tizim yangilandi','⭐ 10 ta yangi yulduz'].forEach(t => notif.appendChild(create('li', {}, t)));
       const feed = $('#activityFeed');
       if (feed) ['GitHub: commit','AI: chat','Cyber: scan','OSINT: lookup'].forEach(t => feed.appendChild(create('div', {}, '• ' + t)));
       const circle = $('#circleProgress');
@@ -510,13 +508,12 @@
   };
 
   /* ============================================================
-     19. TYPING EFFECT
+     19. TYPING EFFECT - INSTANT (no delay)
      ============================================================ */
   const initTyping = () => {
     const el = $('#typingText');
     if (!el) return;
-    const txt = 'KRYZEN HUB';
-    let i = 0; const t = setInterval(() => { el.textContent = txt.slice(0, ++i); if (i >= txt.length) clearInterval(t); }, 100);
+    el.textContent = 'KRYZEN HUB'; // Darhol yozilgan bo'ladi
   };
 
   /* ============================================================
@@ -552,15 +549,15 @@
     });
     on($('#newsletterForm'), 'submit', e => {
       e.preventDefault();
-      showToast('Newsletterga obuna bo\\'ldingiz!');
+      showToast('Newsletterga obuna bo\'ldingiz!');
       e.target.reset();
     });
   };
 
   /* ============================================================
-     22. INIT
+     22. INIT - DARHOL ISHGA TUSHADI
      ============================================================ */
-  document.addEventListener('DOMContentLoaded', () => {
+  const init = () => {
     initLoader();
     initCursor();
     initMatrix();
@@ -588,6 +585,12 @@
     initTyping();
     initSmoothScroll();
     initContact();
-    setTimeout(() => showToast('🌌 KRYZEN HUB ga xush kelibsiz!'), 2000);
-  });
+  };
+
+  // DOM tayyor bo'lganda yoki darhol ishga tushirish
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
