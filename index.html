@@ -13,17 +13,13 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>" />
   <title>KRYZEN HUB — AI, Cyber Security, Developer Tools & Automation</title>
   <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    /* ==== INSTANT PAGE LOAD - Loader yo'q ==== */
+    .loader { display: none !important; }
+  </style>
 </head>
 <body>
-  <!-- ================= LOADING SCREEN ================= -->
-  <div id="loader" class="loader" role="status" aria-label="Loading">
-    <div class="loader-content">
-      <div class="loader-ring"></div>
-      <div class="loader-text">KRYZEN<span>HUB</span></div>
-      <div class="loader-bar"><div class="loader-bar-fill" id="loaderBar"></div></div>
-      <div class="loader-percent" id="loaderPercent">0%</div>
-    </div>
-  </div>
+  <!-- ================= LOADER YASHIRILGAN (CSS orqali) ================= -->
 
   <!-- ================= PROGRESS BAR ================= -->
   <div id="scrollProgress" class="scroll-progress" aria-hidden="true"></div>
@@ -60,7 +56,7 @@
       </a>
 
       <nav class="nav-menu" id="navMenu" aria-label="Asosiy navigatsiya">
-        <a href="#home" class="nav-link">Bosh sahifa</a>
+        <a href="#home" class="nav-link active">Bosh sahifa</a>
         <a href="#ai" class="nav-link">AI Markaz</a>
         <a href="#dev" class="nav-link">Dasturchilar</a>
         <a href="#cyber" class="nav-link">Cyber Security</a>
@@ -95,7 +91,7 @@
   <!-- ================= COMMAND PALETTE ================= -->
   <div class="modal" id="commandPalette" role="dialog" aria-hidden="true">
     <div class="command-content">
-      <input type="text" id="commandInput" placeholder="Buyruq yozing... (goto:home, theme:light, ...)" />
+      <input type="text" id="commandInput" placeholder="Buyruq yozing..." />
       <div class="command-results" id="commandResults"></div>
     </div>
   </div>
@@ -117,7 +113,6 @@
       </div>
       <h1 class="hero-title">
         <span class="typing" id="typingText">KRYZEN HUB</span>
-        <span class="cursor-blink">|</span>
       </h1>
       <p class="hero-subtitle">
         <strong>AI, Cyber Security, Developer Tools va Automation</strong> uchun yagona platforma.
