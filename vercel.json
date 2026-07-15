@@ -4,36 +4,5 @@
       "memory": 1024,
       "maxDuration": 30
     }
-  },
-  "rewrites": [
-    { "source": "/api/chat", "destination": "/api/index" },
-    { "source": "/api/weather", "destination": "/api/index" },
-    { "source": "/api/news", "destination": "/api/index" },
-    { "source": "/api/crypto", "destination": "/api/index" },
-    { "source": "/api/currency", "destination": "/api/index" },
-    { "source": "/api/dictionary", "destination": "/api/index" },
-    { "source": "/api/quote", "destination": "/api/index" },
-    { "source": "/api/ip", "destination": "/api/index" },
-    { "source": "/api/dns", "destination": "/api/index" },
-    { "source": "/api/whois", "destination": "/api/index" },
-    { "source": "/api/headers", "destination": "/api/index" },
-    { "source": "/api/github", "destination": "/api/index" },
-    { "source": "/api/shorten", "destination": "/api/index" },
-    { "source": "/api/download", "destination": "/api/index" },
-    { "source": "/api/translate", "destination": "/api/index" },
-    { "source": "/api/holidays", "destination": "/api/index" },
-    { "source": "/api/qrcode", "destination": "/api/index" },
-    { "source": "/api/password", "destination": "/api/index" },
-    { "source": "/api/uuid", "destination": "/api/index" },
-    { "source": "/api/lorem", "destination": "/api/index" },
-    { "source": "/api/hash", "destination": "/api/index" },
-    { "source": "/api/ssl", "destination": "/api/index" },
-    { "source": "/api/subdomain", "destination": "/api/index" },
-    { "source": "/api/jwt", "destination": "/api/index" },
-    { "source": "/api/phone", "destination": "/api/index" },
-    { "source": "/api/email", "destination": "/api/index" },
-    { "source": "/api/breach", "destination": "/api/index" },
-    { "source": "/api/sentiment", "destination": "/api/index" },
-    { "source": "/api/summarize", "destination": "/api/index" }
-  ]
+  }
 }
